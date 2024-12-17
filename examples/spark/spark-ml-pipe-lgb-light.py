@@ -32,7 +32,7 @@ if __name__ == "__main__":
     spark = get_spark_session()
 
     seed = 42
-    cv = 5
+    cv = 2
     dataset_name = "lama_test_dataset"
     dataset = get_dataset(dataset_name)
 

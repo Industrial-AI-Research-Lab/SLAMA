@@ -140,15 +140,20 @@ def get_spark_session(partitions_num: Optional[int] = None):
         # .config("spark.jars.packages",
         #         "com.microsoft.azure:synapseml_2.12:0.9.5,io.github.fonhorst:spark-lightautoml_2.12:0.1.1")
 
+        extra_jvm_options = ("-Dio.netty.tryReflectionSetAccessible=true "
+                             "-Dlog4j.debug=false "
+                             "-Dlog4j.configuration=log4j.properties")
+
         spark_sess = (
             SparkSession.builder.master(f"local[{partitions_num}]")
             # .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:0.9.5")
-            .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:0.11.1-spark3.3")
+            # .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:0.11.1-spark3.3")
+            .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:1.0.8")
             # .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:0.11.1")
             .config("spark.jars", "jars/spark-lightautoml_2.12-0.1.1.jar")
             .config("spark.jars.repositories", "https://mmlspark.azureedge.net/maven")
-            .config("spark.driver.extraJavaOptions", "-Dio.netty.tryReflectionSetAccessible=true")
-            .config("spark.executor.extraJavaOptions", "-Dio.netty.tryReflectionSetAccessible=true")
+            .config("spark.driver.extraJavaOptions", extra_jvm_options)
+            .config("spark.executor.extraJavaOptions", extra_jvm_options)
             .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
             .config("spark.kryoserializer.buffer.max", "512m")
             .config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
