@@ -18,7 +18,7 @@ from sparklightautoml.utils import get_current_session
 
 BUCKET_NUMS = 6
 PERSISTENCE_MANAGER_ENV_VAR = "PERSISTENCE_MANAGER"
-BASE_DATASETS_PATH = "file:///opt/spark_data/"
+BASE_DATASETS_PATH = "hdfs://node21.bdcl:9000/opt/spark_data/"
 
 
 @dataclass(frozen=True)
