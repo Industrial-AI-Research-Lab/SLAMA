@@ -66,6 +66,7 @@ if __name__ == "__main__":
 
         spark_ml_algo = SparkBoostLGBM(
             freeze_defaults=False,
+            execution_mode="bulk",
             dump_before_fitting_dataset_path="hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet"
         )
         spark_features_pipeline = SparkLGBSimpleFeatures()

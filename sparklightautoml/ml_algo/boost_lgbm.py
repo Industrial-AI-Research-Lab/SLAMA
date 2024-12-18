@@ -488,7 +488,8 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
             "labelCol": train.target_column,
             "validationIndicatorCol": validation_column,
             "verbosity": verbose_eval,
-            "executionMode": self._executin_mode,
+            # "executionMode": self._executin_mode,
+            "dataTransferMode": self._executin_mode,
             "useSingleDatasetMode": self._use_single_dataset_mode,
             "useBarrierExecutionMode": self._use_barrier_execution_mode,
             "isProvideTrainingMetric": True,
@@ -496,7 +497,7 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
             "defaultListenPort": random_port,
             **params,
             **({"alpha": 0.5, "lambdaL1": 0.0, "lambdaL2": 0.0} if train.task.name == "reg" else dict()),
-            "numThreads": 2
+            # "numThreads": 2
         }
 
         # build the booster
@@ -507,7 +508,7 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
         logger.info(f"All lgbm booster params: {run_params}")
 
         rows_count = full_data.count()
-        if (run_params["executionMode"] == "streaming") and (rows_count <= 25_000):
+        if (run_params["dataTransferMode"] == "streaming") and (rows_count <= 25_000):
             warnings.warn(
                 f"The fitting of lightgbm in streaming execution mode "
                 f"may fail with SEGSIGV / SIGBUS error (probably due to a bug in synapse ml) "
