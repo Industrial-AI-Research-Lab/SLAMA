@@ -9,6 +9,7 @@ from pyspark.ml import PipelineModel
 from pyspark.sql import functions as sf
 
 from sparklightautoml.dataset.base import SparkDataset
+from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
 from sparklightautoml.ml_algo.boost_lgbm import SparkBoostLGBM
 from sparklightautoml.pipelines.features.lgb_pipeline import SparkLGBSimpleFeatures
 from sparklightautoml.pipelines.ml.base import SparkMLPipeline
@@ -36,7 +37,9 @@ if __name__ == "__main__":
     dataset_name = "lama_test_dataset"
     dataset = get_dataset(dataset_name)
 
-    persistence_manager = get_persistence_manager()
+    # TODO: there is some problem with composite persistence manager on kubernetes. Need to research later.
+    # persistence_manager = get_persistence_manager()
+    persistence_manager = PlainCachePersistenceManager()
 
     ml_alg_kwargs = {
         "auto_unique_co": 10,
@@ -49,10 +52,13 @@ if __name__ == "__main__":
     with log_exec_time():
         train_df, test_df = prepare_test_and_train(dataset, seed)
 
+        print(f"TRAIN_DF size: {train_df.count()}")
+        print(f"TEST_DF size: {test_df.count()}")
+
         task = SparkTask(dataset.task_type)
         score = task.get_dataset_metric()
 
-        sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
+        sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False, samples=None)
         sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)
 
         iterator = SparkFoldsIterator(sdataset).convert_to_holdout_iterator()
