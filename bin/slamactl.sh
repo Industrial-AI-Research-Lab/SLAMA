@@ -2,7 +2,7 @@
 
 set -ex
 
-BASE_IMAGE_TAG="lama-v3.2.0"
+BASE_IMAGE_TAG="lama-v3.5.3"
 
 if [[ -z "${KUBE_NAMESPACE}" ]]
 then
@@ -41,16 +41,20 @@ function build_jars() {
 }
 
 function build_pyspark_images() {
-  export SPARK_VERSION=3.2.0
-  export HADOOP_VERSION=3.2
+  export SPARK_VERSION=3.5.3
+  export HADOOP_VERSION=3
+  filename="spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}"
 
   mkdir -p /tmp/spark-build-dir
   cd /tmp/spark-build-dir
 
-  wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz \
-    && tar -xvzf spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz \
-    && mv spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} spark \
-    && rm spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
+  if [ ! -f "${filename}.tgz" ]; then
+    rm -rf spark \
+      && rm -rf ${filename} \
+      && wget "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/${filename}.tgz" \
+      && tar -xvzf${filename}.tgz \
+      && mv ${filename} spark
+  fi
 
   # create images with names:
   # - ${REPO}/spark:${BASE_IMAGE_TAG}
@@ -63,7 +67,7 @@ function build_pyspark_images() {
       -p spark/kubernetes/dockerfiles/spark/bindings/python/Dockerfile \
       build
 
-    ./spark/bin/docker-image-tool.sh -r ${REPO} -t ${BASE_IMAGE_TAG} push
+#    ./spark/bin/docker-image-tool.sh -r ${REPO} -t ${BASE_IMAGE_TAG} push
   else
       ./spark/bin/docker-image-tool.sh -t ${BASE_IMAGE_TAG} \
       -p spark/kubernetes/dockerfiles/spark/bindings/python/Dockerfile \
@@ -94,6 +98,11 @@ function build_lama_image() {
   fi
 
   rm -rf dist
+}
+
+function push_images() {
+    docker push ${BASE_SPARK_IMAGE}
+    docker push ${IMAGE}
 }
 
 function build_dist() {
@@ -164,6 +173,46 @@ function submit_job() {
     --conf 'spark.kubernetes.executor.volumes.persistentVolumeClaim.pvc-tmp.mount.readOnly=false' \
     ${script_path}
 }
+
+function submit_job() {
+  APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+
+  script_path=$1
+
+  filename=$(echo ${script_path} | python -c 'import os; path = input(); print(os.path.splitext(os.path.basename(path))[0]);')
+
+  spark-submit \
+    --master k8s://${APISERVER} \
+    --deploy-mode cluster \
+    --py-files "examples/spark/examples_utils.py" \
+    --conf 'spark.kryoserializer.buffer.max=512m' \
+    --conf 'spark.scheduler.minRegisteredResourcesRatio=1.0' \
+    --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
+    --conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
+    --conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
+    --conf 'spark.driver.cores=4' \
+    --conf 'spark.driver.memory=16g' \
+    --conf 'spark.executor.instances=1' \
+    --conf 'spark.executor.cores=8' \
+    --conf 'spark.executor.memory=16g' \
+    --conf 'spark.cores.max=8' \
+    --conf 'spark.memory.fraction=0.6' \
+    --conf 'spark.memory.storageFraction=0.5' \
+    --conf 'spark.sql.autoBroadcastJoinThreshold=100MB' \
+    --conf 'spark.sql.execution.arrow.pyspark.enabled=true' \
+    --conf "spark.kubernetes.container.image=${IMAGE}" \
+    --conf 'spark.kubernetes.namespace='${KUBE_NAMESPACE} \
+    --conf 'spark.kubernetes.authenticate.driver.serviceAccountName=spark' \
+    --conf 'spark.kubernetes.memoryOverheadFactor=0.4' \
+    --conf "spark.kubernetes.driver.label.appname=${filename}" \
+    --conf "spark.kubernetes.executor.label.appname=${filename}" \
+    --conf 'spark.kubernetes.executor.deleteOnTermination=false' \
+    --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
+    --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
+    --conf 'spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir' \
+    ${script_path}
+}
+
 
 function port_forward() {
   script_path=$1
@@ -321,6 +370,10 @@ function main () {
 
     "build-dist")
         build_dist
+        ;;
+
+    "push-images")
+        push_images
         ;;
 
     "submit-job")
