@@ -34,8 +34,8 @@ if __name__ == "__main__":
 
     seed = 42
     cv = 2
-    dataset_name = "lama_test_dataset"
-    # dataset_name = "used_cars_dataset"
+    # dataset_name = "lama_test_dataset"
+    dataset_name = "used_cars_dataset"
     dataset = get_dataset(dataset_name)
 
     # TODO: there is some problem with composite persistence manager on kubernetes. Need to research later.

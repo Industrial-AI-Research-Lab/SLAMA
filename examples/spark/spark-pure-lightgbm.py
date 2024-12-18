@@ -1,6 +1,6 @@
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.types import IntegerType, NumericType
-from synapse.ml.lightgbm import LightGBMClassifier
+from synapse.ml.lightgbm import LightGBMClassifier, LightGBMRegressor
 
 from examples_utils import get_spark_session
 
@@ -12,8 +12,9 @@ def main():
 
     run_params = {
         'featuresCol': 'Mod_0_LightGBM_vassembler_features',
-        'labelCol': 'TARGET',
-        'validationIndicatorCol': 'is_val',
+        # 'labelCol': 'TARGET',
+        'labelCol': "price",
+        # 'validationIndicatorCol': 'is_val',
         'verbosity': 1,
         "dataTransferMode": "bulk",
         # 'executionMode': 'bulk',
@@ -33,14 +34,16 @@ def main():
         'minDataInLeaf': 5,
         'numIterations': 2000,
         'earlyStoppingRound': 200,
-        'objective': 'binary',
-        'metric': 'auc',
+        # 'objective': 'binary',
+        # 'metric': 'auc',
+        'objective': 'regression',
+        'metric': 'rmse',
         'numTasks': None,
         'numThreads': None,
-        'rawPredictionCol': 'raw_prediction',
-        'probabilityCol': 'Mod_0_LightGBM_prediction_0',
+        # 'rawPredictionCol': 'raw_prediction',
+        # 'probabilityCol': 'Mod_0_LightGBM_prediction_0',
         'predictionCol': 'prediction',
-        'isUnbalance': True
+        # 'isUnbalance': True
     }
 
     train_df = spark.read.parquet("hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet")
@@ -51,31 +54,32 @@ def main():
 
     features = [c for c in train_df.columns if c != run_params['labelCol']]
 
-    train_df = train_df.na.fill(0)
-
-    row = train_df.select(
-        sf.count("*").alias("count"),
-        *[
-            sf.mean((sf.isnull(feature) | sf.isnan(feature)).astype(IntegerType())).alias(f"{feature}_nan_rate")
-            for feature in features
-            if isinstance(train_df.schema[feature].dataType, NumericType)
-        ],
-        *[
-            sf.mean((sf.isnull(feature)).astype(IntegerType())).alias(f"{feature}_nan_rate")
-            for feature in features
-            if not isinstance(train_df.schema[feature].dataType, NumericType)
-        ],
-    ).first()
+    # train_df = train_df.na.fill(0)
+    #
+    # row = train_df.select(
+    #     sf.count("*").alias("count"),
+    #     *[
+    #         sf.mean((sf.isnull(feature) | sf.isnan(feature)).astype(IntegerType())).alias(f"{feature}_nan_rate")
+    #         for feature in features
+    #         if isinstance(train_df.schema[feature].dataType, NumericType)
+    #     ],
+    #     *[
+    #         sf.mean((sf.isnull(feature)).astype(IntegerType())).alias(f"{feature}_nan_rate")
+    #         for feature in features
+    #         if not isinstance(train_df.schema[feature].dataType, NumericType)
+    #     ],
+    # ).first()
 
     assembler = VectorAssembler(
-        inputCols=features, outputCol=run_params['featuresCol'], handleInvalid="error"
+        inputCols=features, outputCol=run_params['featuresCol'], handleInvalid="skip"
     )
 
     df = assembler.transform(train_df)
 
     print(f"ASSEMBLED DATASET SIZE: {df.count()}")
 
-    lgbm = LightGBMClassifier(**run_params)
+    # lgbm = LightGBMClassifier(**run_params)
+    lgbm = LightGBMRegressor(**run_params)
 
     ml_model = lgbm.fit(df)
 

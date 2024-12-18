@@ -76,7 +76,8 @@ used_cars_params = {
 }
 
 DATASETS = {
-    "used_cars_dataset": Dataset(path=ds_path("small_used_cars_data.csv"), **used_cars_params),
+    # "used_cars_dataset": Dataset(path=ds_path("small_used_cars_data.csv"), **used_cars_params),
+    "used_cars_dataset": Dataset(path=ds_path("used_cars_data.csv"), **used_cars_params),
     "used_cars_dataset_1x": Dataset(path=ds_path("derivative_datasets/1x_dataset.csv"), **used_cars_params),
     "used_cars_dataset_4x": Dataset(path=ds_path("derivative_datasets/4x_dataset.csv"), **used_cars_params),
     "lama_test_dataset": Dataset(
