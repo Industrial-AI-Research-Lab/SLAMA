@@ -4,10 +4,10 @@ from examples_utils import get_dataset
 from examples_utils import get_persistence_manager
 from examples_utils import get_spark_session
 from examples_utils import prepare_test_and_train
+from examples_utils import check_columns
 from pyspark.ml import PipelineModel
 from pyspark.sql import functions as sf
 
-from examples.spark.examples_utils import check_columns
 from sparklightautoml.dataset.base import SparkDataset
 from sparklightautoml.ml_algo.boost_lgbm import SparkBoostLGBM
 from sparklightautoml.pipelines.features.lgb_pipeline import SparkLGBSimpleFeatures
