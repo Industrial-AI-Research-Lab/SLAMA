@@ -58,12 +58,15 @@ if __name__ == "__main__":
         task = SparkTask(dataset.task_type)
         score = task.get_dataset_metric()
 
-        sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False, samples=None)
+        sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
         sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)
 
         iterator = SparkFoldsIterator(sdataset).convert_to_holdout_iterator()
 
-        spark_ml_algo = SparkBoostLGBM(freeze_defaults=False)
+        spark_ml_algo = SparkBoostLGBM(
+            freeze_defaults=False,
+            dump_before_fitting_dataset_path="hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet"
+        )
         spark_features_pipeline = SparkLGBSimpleFeatures()
 
         ml_pipe = SparkMLPipeline(ml_algos=[spark_ml_algo], features_pipeline=spark_features_pipeline)
