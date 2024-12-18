@@ -85,9 +85,9 @@ if __name__ == "__main__":
         # 2. second way (Spark ML API, save-load-predict)
         transformer = PipelineModel(stages=[sreader.transformer(add_array_attrs=True), ml_pipe.transformer()])
 
-        transformer.write().overwrite().save("/tmp/reader_and_spark_ml_pipe_lgb")
+        transformer.write().overwrite().save("hdfs://node21.bdcl:9000/tmp/reader_and_spark_ml_pipe_lgb")
 
-        pipeline_model = PipelineModel.load("/tmp/reader_and_spark_ml_pipe_lgb")
+        pipeline_model = PipelineModel.load("hdfs://node21.bdcl:9000/tmp/reader_and_spark_ml_pipe_lgb")
         test_pred_df = pipeline_model.transform(test_df)
 
         check_columns(test_df, test_pred_df)

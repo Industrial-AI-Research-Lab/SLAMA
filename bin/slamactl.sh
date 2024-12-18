@@ -190,12 +190,12 @@ function submit_job_k8s() {
     --conf 'spark.kryoserializer.buffer.max=512m' \
     --conf 'spark.scheduler.minRegisteredResourcesRatio=1.0' \
     --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
-    --conf 'spark.driver.cores=4' \
+    --conf 'spark.driver.cores=2' \
     --conf 'spark.driver.memory=16g' \
     --conf 'spark.executor.instances=1' \
-    --conf 'spark.executor.cores=8' \
+    --conf 'spark.executor.cores=1' \
     --conf 'spark.executor.memory=16g' \
-    --conf 'spark.cores.max=8' \
+    --conf 'spark.cores.max=1' \
     --conf 'spark.memory.fraction=0.6' \
     --conf 'spark.memory.storageFraction=0.5' \
     --conf 'spark.sql.autoBroadcastJoinThreshold=100MB' \
@@ -210,6 +210,8 @@ function submit_job_k8s() {
     --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
     --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
     --conf 'spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir' \
+    --conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*' \
+    --conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*' \
     --jars jars/spark-lightautoml_2.12-0.1.1.jar \
     --py-files "examples/spark/examples_utils.py" \
     ${script_path}
