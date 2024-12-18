@@ -21,7 +21,7 @@ def main():
         'useSingleDatasetMode': True,
         'useBarrierExecutionMode': False,
         'isProvideTrainingMetric': True,
-        'chunkSize': 4000000,
+        'chunkSize': 10_000,
         'defaultListenPort': 13614,
         'learningRate': 0.03,
         'numLeaves': 64,
@@ -48,7 +48,7 @@ def main():
     }
 
     train_df = spark.read.parquet("hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet")
-    train_df = train_df.cache()
+    train_df = train_df.repartition(4).cache()
     size = train_df.count()
 
     print(f"DATASET SIZE: {size}")
