@@ -22,7 +22,7 @@ def main():
     df.printSchema()
 
     # df = df.na.fill(0.0)
-    df = df.cache()
+    df = df.repartition(2).cache()
     df.count()
 
     feature_cols = [c for c in df.columns if c not in ['TARGET', 'is_val']]
@@ -30,18 +30,31 @@ def main():
     row = df.select(
         sf.count("*").alias("count"),
         *[
-            sf.mean((sf.isnull(feature) | sf.isnan(feature)).astype(IntegerType())).alias(f"{feature}_nan_rate")
+            sf.mean((sf.isnull(feature) | sf.isnan(feature)).astype(IntegerType())).alias(f"{feature}")
             for feature in feature_cols
             if isinstance(df.schema[feature].dataType, NumericType)
         ],
         *[
-            sf.mean((sf.isnull(feature)).astype(IntegerType())).alias(f"{feature}_nan_rate")
+            sf.mean((sf.isnull(feature)).astype(IntegerType())).alias(f"{feature}")
             for feature in feature_cols
             if not isinstance(df.schema[feature].dataType, NumericType)
         ],
     ).first()
 
-    feature_cols = ["AMT_ANNUITY", "AMT_CREDIT", "AMT_INCOME_TOTAL"]
+    features = {
+        col: rate for col, rate in row.asDict().items()
+        if rate < 0.00000000000001 and col not in ['TARGET', 'is_val', 'reader_fold_num']
+    }
+
+    feature_cols = sorted(features.keys())
+    # feature_cols = feature_cols[:10] + feature_cols[:20]
+    # feature_cols = feature_cols[:25]
+
+    # df = df.na.fill(0.0)
+    # df = df.cache()
+    # df.count()
+
+    # feature_cols = ["AMT_ANNUITY", "AMT_CREDIT", "AMT_INCOME_TOTAL"]
 
     train, test = df.randomSplit([0.85, 0.15], seed=1)
 

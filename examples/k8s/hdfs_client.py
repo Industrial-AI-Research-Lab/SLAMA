@@ -1,6 +1,6 @@
 from hdfs import InsecureClient
 
-dataset_name = "company_bankruptcy_prediction_data.csv"
+dataset_name = "small_used_cars_data.csv"
 
 client = InsecureClient('http://node21.bdcl:9870', user='test')
 
