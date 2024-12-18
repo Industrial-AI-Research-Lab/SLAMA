@@ -13,7 +13,7 @@ def main():
         .option("header", True)
         .option("inferSchema", True)
         .load(
-            "hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet"
+            "hdfs://node21.bdcl:9000/tmp/bad_dataset_large.parquet"
         )
     )
     # print dataset size
@@ -23,6 +23,9 @@ def main():
 
     # df = df.na.fill(0.0)
     df = df.repartition(2).cache()
+    # df = df.select('*', sf.explode(sf.lit(list(range(100)))).alias("_tmp")).drop("_tmp")
+    # df.write.parquet("hdfs://node21.bdcl:9000/tmp/bad_dataset_large.parquet")
+    # return
     df.count()
 
     feature_cols = [c for c in df.columns if c not in ['TARGET', 'is_val']]
@@ -65,7 +68,7 @@ def main():
     from synapse.ml.lightgbm import LightGBMClassifier
 
     model = LightGBMClassifier(
-        objective="binary", featuresCol="features", labelCol="TARGET", isUnbalance=True
+        objective="binary", featuresCol="features", labelCol="TARGET", isUnbalance=True, dataTransferMode="bulk"
     )
 
     model = model.fit(train_data)
