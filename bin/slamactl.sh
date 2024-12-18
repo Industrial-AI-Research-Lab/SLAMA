@@ -174,22 +174,22 @@ function submit_job() {
     ${script_path}
 }
 
-function submit_job() {
+function submit_job_k8s() {
   APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
 
   script_path=$1
 
   filename=$(echo ${script_path} | python -c 'import os; path = input(); print(os.path.splitext(os.path.basename(path))[0]);')
 
+  #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
+  #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
+
   spark-submit \
     --master k8s://${APISERVER} \
     --deploy-mode cluster \
-    --py-files "examples/spark/examples_utils.py" \
     --conf 'spark.kryoserializer.buffer.max=512m' \
     --conf 'spark.scheduler.minRegisteredResourcesRatio=1.0' \
     --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
-    --conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
-    --conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
     --conf 'spark.driver.cores=4' \
     --conf 'spark.driver.memory=16g' \
     --conf 'spark.executor.instances=1' \
@@ -210,6 +210,8 @@ function submit_job() {
     --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
     --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
     --conf 'spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir' \
+    --jars jars/spark-lightautoml_2.12-0.1.1.jar \
+    --py-files "examples/spark/examples_utils.py" \
     ${script_path}
 }
 
@@ -386,6 +388,10 @@ function main () {
 
     "submit-job-spark")
         submit_job_spark "${@}"
+        ;;
+
+    "submit-job-k8s")
+        submit_job_k8s "${@}"
         ;;
 
     "port-forward")
