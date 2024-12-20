@@ -2,11 +2,11 @@
 
 set -ex
 
-export SPARK_VERSION=3.3.1
+export SPARK_VERSION=3.5.3
 export HADOOP_VERSION=3
-SYNAPSEML_VERSION=0.11.4
+SYNAPSEML_VERSION=1.0.8
 SLAMA_VERSION=0.4.1
-LIGHTGBM_VERSION=3.2.1
+LIGHTGBM_VERSION=3.3.5
 BASE_IMAGE_TAG="slama-${SYNAPSEML_VERSION}-spark${SPARK_VERSION}"
 
 if [[ -z "${KUBE_NAMESPACE}" ]]
@@ -201,7 +201,7 @@ function submit_job_k8s() {
     --conf 'spark.driver.cores=2' \
     --conf 'spark.driver.memory=16g' \
     --conf 'spark.executor.instances=2' \
-    --conf 'spark.executor.cores=2' \
+    --conf 'spark.executor.cores=1' \
     --conf 'spark.executor.memory=16g' \
     --conf 'spark.cores.max=4' \
     --conf 'spark.memory.fraction=0.6' \
