@@ -1,3 +1,5 @@
+import time
+
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.types import IntegerType, NumericType
 from synapse.ml.lightgbm import LightGBMClassifier, LightGBMRegressor
@@ -135,7 +137,7 @@ def main():
     train_df = spark.read.csv("hdfs://node21.bdcl:9000/tmp/bd_2cols.csv", header=True, inferSchema=True)
     features = ["ord__bed", "ord__bed_height"]
 
-    train_df = train_df.repartition(4).cache()
+    train_df = train_df.repartition(2).cache()
     train_df.count()
 
     # print("=================================================")
