@@ -121,7 +121,18 @@ def main():
 
     features = features[1:3]
     features = ["ord__bed", "ord__bed_height"]
+    train_df = train_df.select("price", sf.col("ord__bed").astype("double"), sf.col("ord__bed_height").astype("double"))
+
     # features = ["latitude", "longitude"]
+
+    # features = [
+    #     "daysonmarket",
+    #     "latitude",
+    #     "listing_id",
+    #     "longitude",
+    #     "mileage",
+    #     "savings_amount"
+    # ]
 
     # train_df = train_df.na.fill(0)
     #
