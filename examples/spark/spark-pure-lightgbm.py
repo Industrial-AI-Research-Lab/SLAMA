@@ -52,7 +52,15 @@ def main():
     # train_df = train_df.repartition(4).cache()
     # train_df.fillna(0.0).sample(0.01).repartition(1).write.csv("hdfs://node21.bdcl:9000/tmp/bd.csv", header=True, mode="overwrite")
 
-    # train_df = spark.read.csv("hdfs://node21.bdcl:9000/tmp/bd.csv", header=True, inferSchema=True)
+    train_df = spark.read.csv("hdfs://node21.bdcl:9000/tmp/bd.csv", header=True, inferSchema=True)
+    # train_df = train_df.repartition(4).cache()
+
+    # train_df = train_df.select(*[sf.col(c).astype("float").alias(c) for c in train_df.columns])
+    # train_df.repartition(1).write.csv("hdfs://node21.bdcl:9000/tmp/converted_bd.csv", header=True, mode="overwrite")
+    # return
+
+    train_df = spark.read.csv("hdfs://node21.bdcl:9000/tmp/converted_bd.csv", header=True, inferSchema=True)
+    # train_df.printSchema()
     # train_df = train_df.repartition(4).cache()
     # size = train_df.count()
     #
@@ -120,12 +128,18 @@ def main():
     # # features = features[1:2]
     #
     # features = features[1:3]
-    # features = ["ord__bed", "ord__bed_height"]
+    features = ["ord__bed", "ord__bed_height"]
     # train_df = train_df.select("price", sf.col("ord__bed").astype("double"), sf.col("ord__bed_height").astype("double"))
 
     # suprisignly, it works
     train_df = spark.read.csv("hdfs://node21.bdcl:9000/tmp/bd_2cols.csv", header=True, inferSchema=True)
     features = ["ord__bed", "ord__bed_height"]
+
+    train_df = train_df.repartition(4).cache()
+    train_df.count()
+
+    # print("=================================================")
+    # train_df.printSchema()
 
     # features = ["latitude", "longitude"]
 
