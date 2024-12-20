@@ -2,7 +2,12 @@
 
 set -ex
 
-BASE_IMAGE_TAG="lama-v3.5.3"
+export SPARK_VERSION=3.5.3
+export HADOOP_VERSION=3
+SYNAPSEML_VERSION=1.0.8
+SLAMA_VERSION=0.4.1
+LIGHTGBM_VERSION=3.2.1
+BASE_IMAGE_TAG="lama-v${SPARK_VERSION}"
 
 if [[ -z "${KUBE_NAMESPACE}" ]]
 then
@@ -41,8 +46,6 @@ function build_jars() {
 }
 
 function build_pyspark_images() {
-  export SPARK_VERSION=3.5.3
-  export HADOOP_VERSION=3
   filename="spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}"
 
   mkdir -p /tmp/spark-build-dir
@@ -88,6 +91,10 @@ function build_lama_image() {
 
   docker build \
     --build-arg base_image=${BASE_SPARK_IMAGE} \
+    --build-arg SPARK_VER=${SPARK_VERSION} \
+    --build-arg SYNAPSEML_VER=${SYNAPSEML_VER}
+    --build-arg SLAMA_VER=0.4.1 \
+    --build-arg LIGHTGBM_VER=3.2.1 \
     -t ${IMAGE} \
     -f docker/spark-lama/spark-py-lama.dockerfile \
     .
