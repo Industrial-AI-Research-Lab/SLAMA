@@ -105,7 +105,23 @@ def main():
         "ord__wheelbase",
         "ord__width"
     ]
-    features = ["latitude", "longitude"]
+
+    # # doesn't work
+    # features = features[:5]
+    # # works
+    # features = features[:1]
+    # # doesn't work
+    # features = features[:3]
+    # # works
+    # features = features[2:3]
+    # # doesn't work
+    # features = features[1:3]
+    # # works
+    # features = features[1:2]
+
+    features = features[1:3]
+    features = ["ord__bed", "ord__bed_height"]
+    # features = ["latitude", "longitude"]
 
     # train_df = train_df.na.fill(0)
     #
