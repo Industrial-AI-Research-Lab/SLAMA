@@ -4341,12 +4341,12 @@ dev = ["hypothesis (>=6.70.0)", "pytest (>=7.1.0)"]
 
 [[package]]
 name = "synapseml"
-version = "1.0.8"
+version = "0.11.4"
 description = "Synapse Machine Learning"
 optional = false
 python-versions = "*"
 files = [
-    {file = "synapseml-1.0.8-py2.py3-none-any.whl", hash = "sha256:8b174ed6817ec3b97aae1e8f077b568dbd1f27aa023114896bfb251b66389ae9"},
+    {file = "synapseml-0.11.4-py2.py3-none-any.whl", hash = "sha256:30e5b102523ce57f54c469c49d3e46482c5976dcf4ecb5d9145bf0c999c9182c"},
 ]
 
 [[package]]
@@ -4831,4 +4831,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8, <3.12"
-content-hash = "025ab1be75d863664c692825361dcdddd0a8c583ab81e60521ba087c84906f35"
+content-hash = "866efa171dc4d125e14e6e4ae742b05b4e518e432c66a47764effe9421c7f04f"
