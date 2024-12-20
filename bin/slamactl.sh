@@ -2,11 +2,11 @@
 
 set -ex
 
-export SPARK_VERSION=3.5.3
+export SPARK_VERSION=3.3.1
 export HADOOP_VERSION=3
-SYNAPSEML_VERSION=1.0.8
+SYNAPSEML_VERSION=0.11.4
 SLAMA_VERSION=0.4.1
-LIGHTGBM_VERSION=3.3.5
+LIGHTGBM_VERSION=3.2.1
 BASE_IMAGE_TAG="slama-${SYNAPSEML_VERSION}-spark${SPARK_VERSION}"
 
 if [[ -z "${KUBE_NAMESPACE}" ]]
@@ -197,6 +197,7 @@ function submit_job_k8s() {
     --conf 'spark.kryoserializer.buffer.max=512m' \
     --conf 'spark.scheduler.minRegisteredResourcesRatio=1.0' \
     --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
+    --conf 'spark.task.maxFailures=1' \
     --conf 'spark.driver.cores=2' \
     --conf 'spark.driver.memory=16g' \
     --conf 'spark.executor.instances=1' \

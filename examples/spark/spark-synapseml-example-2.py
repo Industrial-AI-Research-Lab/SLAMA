@@ -68,7 +68,7 @@ def main():
     from synapse.ml.lightgbm import LightGBMClassifier
 
     model = LightGBMClassifier(
-        objective="binary", featuresCol="features", labelCol="TARGET", isUnbalance=True, dataTransferMode="bulk"
+        objective="binary", featuresCol="features", labelCol="TARGET", isUnbalance=True, executionMode="streaming"
     )
 
     model = model.fit(train_data)

@@ -41,7 +41,7 @@ poetry-core = "^1.0.0"
 lightautoml = "0.3.8.1"
 
 # PySpark
-pyspark = ">=3.3.1"
+pyspark = "==3.3.1"
 pyarrow = ">=1.0.0"
 synapseml = "0.11.4"
 toposort = "1.7"
