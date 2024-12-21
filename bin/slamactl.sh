@@ -6,8 +6,8 @@ export SPARK_VERSION=3.5.3
 export HADOOP_VERSION=3
 SYNAPSEML_VERSION=1.0.8
 SLAMA_VERSION=0.4.1
-LIGHTGBM_VERSION=3.2.1
-BASE_IMAGE_TAG="slama-${SYNAPSEML_VER}-spark${SPARK_VERSION}"
+LIGHTGBM_VERSION=3.3.5
+BASE_IMAGE_TAG="slama-${SYNAPSEML_VERSION}-spark${SPARK_VERSION}"
 
 if [[ -z "${KUBE_NAMESPACE}" ]]
 then
@@ -92,7 +92,7 @@ function build_lama_image() {
   docker build \
     --build-arg base_image=${BASE_SPARK_IMAGE} \
     --build-arg SPARK_VER=${SPARK_VERSION} \
-    --build-arg SYNAPSEML_VER=${SYNAPSEML_VER}
+    --build-arg SYNAPSEML_VER=${SYNAPSEML_VERSION} \
     --build-arg SLAMA_VER=0.4.1 \
     --build-arg LIGHTGBM_VER=3.2.1 \
     -t ${IMAGE} \
@@ -197,11 +197,12 @@ function submit_job_k8s() {
     --conf 'spark.kryoserializer.buffer.max=512m' \
     --conf 'spark.scheduler.minRegisteredResourcesRatio=1.0' \
     --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
+    --conf 'spark.task.maxFailures=1' \
     --conf 'spark.driver.cores=2' \
     --conf 'spark.driver.memory=16g' \
     --conf 'spark.executor.instances=1' \
     --conf 'spark.executor.cores=4' \
-    --conf 'spark.executor.memory=32g' \
+    --conf 'spark.executor.memory=16g' \
     --conf 'spark.cores.max=4' \
     --conf 'spark.memory.fraction=0.6' \
     --conf 'spark.memory.storageFraction=0.5' \

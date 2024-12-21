@@ -1,3 +1,5 @@
+import time
+
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.types import IntegerType, NumericType
 from synapse.ml.lightgbm import LightGBMClassifier, LightGBMRegressor
@@ -18,6 +20,7 @@ def main():
         'verbosity': 1,
         # "dataTransferMode": "bulk",
         "dataTransferMode": "streaming",
+        # "executionMode": "streaming",
         'useSingleDatasetMode': True,
         'useBarrierExecutionMode': False,
         'isProvideTrainingMetric': True,
@@ -47,13 +50,109 @@ def main():
         # 'isUnbalance': True
     }
 
-    train_df = spark.read.parquet("hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet")
-    train_df = train_df.repartition(4).cache()
-    size = train_df.count()
+    # train_df = spark.read.parquet("hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet")
+    # train_df = train_df.repartition(4).cache()
+    # train_df.fillna(0.0).sample(0.01).repartition(1).write.csv("hdfs://node21.bdcl:9000/tmp/bd.csv", header=True, mode="overwrite")
 
-    print(f"DATASET SIZE: {size}")
+    train_df = spark.read.csv("hdfs://node21.bdcl:9000/tmp/bd.csv", header=True, inferSchema=True)
+    # train_df = train_df.repartition(4).cache()
 
-    features = [c for c in train_df.columns if c != run_params['labelCol']]
+    # train_df = train_df.select(*[sf.col(c).astype("float").alias(c) for c in train_df.columns])
+    # train_df.repartition(1).write.csv("hdfs://node21.bdcl:9000/tmp/converted_bd.csv", header=True, mode="overwrite")
+    # return
+
+    train_df = spark.read.csv("hdfs://node21.bdcl:9000/tmp/converted_bd.csv", header=True, inferSchema=True)
+    # train_df.printSchema()
+    # train_df = train_df.repartition(4).cache()
+    # size = train_df.count()
+    #
+    # print(f"DATASET SIZE: {size}")
+    #
+    # # features = [c for c in train_df.columns if c != run_params['labelCol']]
+    # features = [
+    #     "ord__back_legroom",
+    #     "ord__bed",
+    #     "ord__bed_height",
+    #     "ord__bed_length",
+    #     "ord__body_type",
+    #     "ord__cabin",
+    #     "ord__city",
+    #     "ord__city_fuel_economy",
+    #     "ord__engine_cylinders",
+    #     "ord__engine_displacement",
+    #     "ord__engine_type",
+    #     "ord__fleet",
+    #     "ord__frame_damaged",
+    #     "ord__franchise_dealer",
+    #     "ord__franchise_make",
+    #     "ord__front_legroom",
+    #     "ord__fuel_tank_volume",
+    #     "ord__fuel_type",
+    #     "ord__has_accidents",
+    #     "ord__height",
+    #     "ord__highway_fuel_economy",
+    #     "ord__horsepower",
+    #     "ord__isCab",
+    #     "ord__is_cpo",
+    #     "ord__is_new",
+    #     "ord__is_oemcpo",
+    #     "ord__length",
+    #     "ord__listing_color",
+    #     "ord__make_name",
+    #     "ord__maximum_seating",
+    #     "ord__model_name",
+    #     "ord__owner_count",
+    #     "ord__power",
+    #     "ord__salvage",
+    #     "ord__seller_rating",
+    #     "ord__theft_title",
+    #     "ord__torque",
+    #     "ord__transmission",
+    #     "ord__transmission_display",
+    #     "ord__vin",
+    #     "ord__wheel_system",
+    #     "ord__wheel_system_display",
+    #     "ord__wheelbase",
+    #     "ord__width"
+    # ]
+    #
+    # # # doesn't work
+    # # features = features[:5]
+    # # # works
+    # # features = features[:1]
+    # # # doesn't work
+    # # features = features[:3]
+    # # # works
+    # # features = features[2:3]
+    # # # doesn't work
+    # # features = features[1:3]
+    # # # works
+    # # features = features[1:2]
+    #
+    # features = features[1:3]
+    features = ["ord__bed", "ord__bed_height"]
+    # train_df = train_df.select("price", sf.col("ord__bed").astype("double"), sf.col("ord__bed_height").astype("double"))
+
+    # suprisignly, it works
+    train_df = spark.read.csv("hdfs://node21.bdcl:9000/tmp/bd_2cols.csv", header=True, inferSchema=True)
+    features = ["ord__bed", "ord__bed_height"]
+
+    train_df = train_df.repartition(2).cache()
+    train_df.count()
+
+    # print("=================================================")
+    # train_df.printSchema()
+
+    # features = ["latitude", "longitude"]
+
+    # features = [
+    #     "daysonmarket",
+    #     "latitude",
+    #     "listing_id",
+    #     "longitude",
+    #     "mileage",
+    #     "savings_amount"
+    # ]
 
     # train_df = train_df.na.fill(0)
     #

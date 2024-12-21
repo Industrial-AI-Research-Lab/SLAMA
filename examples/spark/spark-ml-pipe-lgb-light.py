@@ -34,8 +34,8 @@ if __name__ == "__main__":
 
     seed = 42
     cv = 2
-    # dataset_name = "lama_test_dataset"
-    dataset_name = "used_cars_dataset"
+    dataset_name = "lama_test_dataset"
+    # dataset_name = "used_cars_dataset"
     dataset = get_dataset(dataset_name)
 
     # TODO: there is some problem with composite persistence manager on kubernetes. Need to research later.
@@ -65,9 +65,12 @@ if __name__ == "__main__":
         iterator = SparkFoldsIterator(sdataset).convert_to_holdout_iterator()
 
         spark_ml_algo = SparkBoostLGBM(
-            freeze_defaults=False,
+            default_params={
+              "numIterations": 50,
+            },
+            freeze_defaults=True,
             execution_mode="bulk",
-            dump_before_fitting_dataset_path="hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet"
+            # dump_before_fitting_dataset_path="hdfs://node21.bdcl:9000/tmp/bad_dataset.parquet"
         )
         spark_features_pipeline = SparkLGBSimpleFeatures()
 

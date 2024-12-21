@@ -29,7 +29,8 @@ def main():
     from synapse.ml.lightgbm import LightGBMClassifier
 
     model = LightGBMClassifier(
-        objective="binary", featuresCol="features", labelCol="Bankrupt?", isUnbalance=True
+        objective="binary", featuresCol="features", labelCol="Bankrupt?", isUnbalance=True,
+        executionMode="streaming"
     )
 
     model = model.fit(train_data)
