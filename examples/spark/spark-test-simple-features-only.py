@@ -34,8 +34,9 @@ if __name__ == "__main__":
     spark = get_spark_session()
 
     seed = 42
-    cv = 2
+    cv = 5
     dataset_name = "lama_test_dataset"
+    # dataset_name = "small_used_cars_dataset"
     # dataset_name = "used_cars_dataset"
     dataset = get_dataset(dataset_name)
 
@@ -57,7 +58,7 @@ if __name__ == "__main__":
 
         sdataset = SparkLGBSimpleFeatures().fit_transform(sdataset)
 
-        sdataset.save(f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama")
+        sdataset.save(f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama", save_mode="overwrite")
 
         # # How to load
         # sdataset = SparkDataset.load(
