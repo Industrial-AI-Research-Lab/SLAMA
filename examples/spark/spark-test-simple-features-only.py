@@ -35,9 +35,11 @@ if __name__ == "__main__":
 
     seed = 42
     cv = 5
-    dataset_name = "lama_test_dataset"
+    # dataset_name = "lama_test_dataset"
     # dataset_name = "small_used_cars_dataset"
     # dataset_name = "used_cars_dataset"
+    # dataset_name = "used_cars_dataset_4x"
+    dataset_name = "used_cars_dataset_40x"
     dataset = get_dataset(dataset_name)
 
     # TODO: there is some problem with composite persistence manager on kubernetes. Need to research later.
@@ -45,19 +47,14 @@ if __name__ == "__main__":
     persistence_manager = PlainCachePersistenceManager()
 
     with log_exec_time():
-        train_df, test_df = prepare_test_and_train(dataset, seed)
-
-        print(f"TRAIN_DF size: {train_df.count()}")
-        print(f"TEST_DF size: {test_df.count()}")
+        train_df = dataset.load()
 
         task = SparkTask(dataset.task_type)
-        score = task.get_dataset_metric()
 
         sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
         sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)
 
         sdataset = SparkLGBSimpleFeatures().fit_transform(sdataset)
-
         sdataset.save(f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama", save_mode="overwrite")
 
         # # How to load

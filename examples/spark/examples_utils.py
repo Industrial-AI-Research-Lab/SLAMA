@@ -78,8 +78,11 @@ used_cars_params = {
 DATASETS = {
     "small_used_cars_dataset": Dataset(path=ds_path("small_used_cars_data.csv"), **used_cars_params),
     "used_cars_dataset": Dataset(path=ds_path("used_cars_data.csv"), **used_cars_params),
-    "used_cars_dataset_1x": Dataset(path=ds_path("derivative_datasets/1x_dataset.csv"), **used_cars_params),
-    "used_cars_dataset_4x": Dataset(path=ds_path("derivative_datasets/4x_dataset.csv"), **used_cars_params),
+    # "used_cars_dataset_1x": Dataset(path=ds_path("derivative_datasets/1x_dataset.csv"), **used_cars_params),
+    "used_cars_dataset_4x": Dataset(path=ds_path("used_cars_4x_dataset.csv"), **used_cars_params),
+    "used_cars_dataset_10x": Dataset(path=ds_path("used_cars_10x_dataset.csv"), **used_cars_params),
+    "used_cars_dataset_40x": Dataset(path=ds_path("used_cars_40x_dataset.csv"), **used_cars_params),
+    "used_cars_dataset_100x": Dataset(path=ds_path("used_cars_100x_dataset.csv"), **used_cars_params),
     "lama_test_dataset": Dataset(
         path=ds_path("sampled_app_train.csv"), task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
         # path=ds_path("100k_sampled_app_train.csv"), task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
@@ -106,7 +109,7 @@ def get_dataset(name: str) -> Dataset:
 
 
 def prepare_test_and_train(
-    dataset: Dataset, seed: int, test_size: float = 0.2
+    dataset: Dataset, seed: int, test_size: float = 0.2, partitions_coefficient: int = 1
 ) -> Tuple[SparkDataFrame, SparkDataFrame]:
     assert 0 <= test_size <= 1
 
@@ -117,7 +120,7 @@ def prepare_test_and_train(
 
     data = dataset.load()
 
-    data = data.repartition(execs * cores).cache()
+    data = data.repartition(execs * cores * partitions_coefficient).cache()
     data.write.mode("overwrite").format("noop").save()
 
     train_data, test_data = data.randomSplit([1 - test_size, test_size], seed)
