@@ -1,9 +1,10 @@
 FROM python:3.9.9
 
-RUN wget https://download.java.net/openjdk/jdk11/ri/openjdk-11+28_linux-x64_bin.tar.gz
-RUN tar -xvf openjdk-11+28_linux-x64_bin.tar.gz
-RUN mv jdk-11 /usr/local/lib/jdk-11
+RUN wget https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.25%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.25_9.tar.gz
+RUN tar -xvf OpenJDK11U-jdk_x64_linux_hotspot_11.0.25_9.tar.gz
+RUN mv jdk-11.0.25+9 /usr/local/lib/jdk-11
 RUN ln -s /usr/local/lib/jdk-11/bin/java /usr/local/bin/java
+RUN rm OpenJDK11U-jdk_x64_linux_hotspot_11.0.25_9.tar.gz
 
 RUN mkdir -p /src
 COPY dist/sparklightautoml_dev-0.3.2-py3-none-any.whl /src

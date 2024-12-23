@@ -7,7 +7,7 @@ export HADOOP_VERSION=3
 SYNAPSEML_VERSION=1.0.8
 SLAMA_VERSION=0.4.1
 LIGHTGBM_VERSION=3.3.5
-BASE_IMAGE_TAG="slama-${SYNAPSEML_VERSION}-spark${SPARK_VERSION}"
+BASE_IMAGE_TAG="slama-${SYNAPSEML_VERSION}-spark${SPARK_VERSION}-dmnasonov"
 
 if [[ -z "${KUBE_NAMESPACE}" ]]
 then
@@ -43,9 +43,14 @@ function build_jars() {
     -v "${cur_dir}/scala-lightautoml-transformers:/scala-lightautoml-transformers" \
     -v "${cur_dir}/jars:/jars" \
     lama-jar-builder
+
+  cd "${cur_dir}"
 }
 
 function build_pyspark_images() {
+  cur_dir=$(pwd)
+  export SPARK_VERSION=3.5.3
+  export HADOOP_VERSION=3
   filename="spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}"
 
   mkdir -p /tmp/spark-build-dir
@@ -66,30 +71,35 @@ function build_pyspark_images() {
 
   if [[ ! -z "${REPO}" ]]
   then
-    ./spark/bin/docker-image-tool.sh -r ${REPO} -t ${BASE_IMAGE_TAG} \
+    DOCKER_DEFAULT_PLATFORM=linux/amd64 ./spark/bin/docker-image-tool.sh -r ${REPO} -t ${BASE_IMAGE_TAG} \
       -p spark/kubernetes/dockerfiles/spark/bindings/python/Dockerfile \
       build
 
 #    ./spark/bin/docker-image-tool.sh -r ${REPO} -t ${BASE_IMAGE_TAG} push
   else
-      ./spark/bin/docker-image-tool.sh -t ${BASE_IMAGE_TAG} \
+      DOCKER_DEFAULT_PLATFORM=linux/amd64 ./spark/bin/docker-image-tool.sh -t ${BASE_IMAGE_TAG} \
       -p spark/kubernetes/dockerfiles/spark/bindings/python/Dockerfile \
       build
   fi
+  
+  cd "${cur_dir}"
 }
 
 function build_lama_dist() {
+  cur_dir=$(pwd)
   # shellcheck disable=SC2094
   poetry export -f requirements.txt > requirements.txt
   poetry build
+  cd "${cur_dir}"
 }
 
 function build_lama_image() {
+  cur_dir=$(pwd)
   # shellcheck disable=SC2094
   poetry export -f requirements.txt > requirements.txt
   poetry build
 
-  docker build \
+  DOCKER_DEFAULT_PLATFORM=linux/amd64  docker build \
     --build-arg base_image=${BASE_SPARK_IMAGE} \
     --build-arg SPARK_VER=${SPARK_VERSION} \
     --build-arg SYNAPSEML_VER=${SYNAPSEML_VERSION} \
@@ -105,6 +115,7 @@ function build_lama_image() {
   fi
 
   rm -rf dist
+  cd "${cur_dir}"
 }
 
 function push_images() {
@@ -182,11 +193,17 @@ function submit_job() {
 }
 
 function submit_job_k8s() {
+  load_env
+  
   APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
 
   script_path=$1
 
   filename=$(echo ${script_path} | python -c 'import os; path = input(); print(os.path.splitext(os.path.basename(path))[0]);')
+  local TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  local APP_ID="test_${filename}_${TIMESTAMP}"
+  # std = d16g2c_e16g4c_k8mo_0.4
+  local CONFIG_SUFFIX="x40_${TIMESTAMP}_e256g"
 
   #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
   #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
@@ -202,7 +219,7 @@ function submit_job_k8s() {
     --conf 'spark.driver.memory=16g' \
     --conf 'spark.executor.instances=1' \
     --conf 'spark.executor.cores=4' \
-    --conf 'spark.executor.memory=16g' \
+    --conf 'spark.executor.memory=256g' \
     --conf 'spark.cores.max=4' \
     --conf 'spark.memory.fraction=0.6' \
     --conf 'spark.memory.storageFraction=0.5' \
@@ -212,18 +229,22 @@ function submit_job_k8s() {
     --conf 'spark.kubernetes.namespace='${KUBE_NAMESPACE} \
     --conf 'spark.kubernetes.authenticate.driver.serviceAccountName=spark' \
     --conf 'spark.kubernetes.memoryOverheadFactor=0.4' \
-    --conf "spark.kubernetes.driver.label.appname=${filename}" \
-    --conf "spark.kubernetes.executor.label.appname=${filename}" \
+    --conf "spark.kubernetes.driver.label.appname=${CONFIG_SUFFIX}" \
+    --conf "spark.kubernetes.executor.label.appname=${CONFIG_SUFFIX}" \
     --conf 'spark.kubernetes.executor.deleteOnTermination=false' \
     --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
     --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
     --conf 'spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir' \
     --conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*' \
     --conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*' \
-    --jars jars/spark-lightautoml_2.12-0.1.1.jar \
+    --conf "spark.app.name=${CONFIG_SUFFIX}" \
+    --conf "spark.driver.extraJavaOptions=-Dlog4j.logger.com.uber.profiling=DEBUG -javaagent:\"/root/jars/jvm-profiler-1.0.0.jar=reporter=com.uber.profiling.reporters.InfluxDBOutputReporter,metricInterval=2500,sampleInterval=2500,ioProfiling=false,influxdb.host=${INFLUXDB_HOST},influxdb.port=${INFLUXDB_PORT},influxdb.database=${INFLUXDB_DATABASE},influxdb.username=${INFLUXDB_USERNAME},influxdb.password=${INFLUXDB_PASSWORD},metaId.override=${CONFIG_SUFFIX}\"" \
+    --conf "spark.executor.extraJavaOptions=-Dlog4j.logger.com.uber.profiling=DEBUG -javaagent:\"/root/jars/jvm-profiler-1.0.0.jar=reporter=com.uber.profiling.reporters.InfluxDBOutputReporter,metricInterval=2500,sampleInterval=2500,ioProfiling=false,influxdb.host=${INFLUXDB_HOST},influxdb.port=${INFLUXDB_PORT},influxdb.database=${INFLUXDB_DATABASE},influxdb.username=${INFLUXDB_USERNAME},influxdb.password=${INFLUXDB_PASSWORD},metaId.override=${CONFIG_SUFFIX}\"" \
+    --jars jars/spark-lightautoml_2.12-0.1.1.jar,jars/jvm-profiler-1.0.0.jar \
     --py-files "examples/spark/examples_utils.py" \
     ${script_path}
 }
+
 
 
 function port_forward() {
@@ -429,6 +450,21 @@ function main () {
         ;;
 
     esac
+}
+
+load_env() {
+  if [ -f ".env" ]; then
+    set -a
+    source ".env"
+    set +a
+  elif [ -f "../.env" ]; then
+    set -a
+    source "../.env"
+    set +a
+  else
+    echo "Warning: .env file not found in current directory or project root directory"
+    exit 1
+  fi
 }
 
 main "${@}"
