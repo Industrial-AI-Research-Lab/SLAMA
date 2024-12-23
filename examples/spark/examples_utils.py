@@ -134,6 +134,19 @@ def prepare_test_and_train(
     return train_data, test_data
 
 
+def load_data(dataset: Dataset, partitions_coefficient: int = 1) -> SparkDataFrame:
+    spark = get_current_session()
+
+    execs = int(os.getenv('SPARK_EXECUTOR_INSTANCES', spark.conf.get("spark.executor.instances", "1")))
+    cores = int(os.getenv('SPARK_EXECUTOR_CORES', spark.conf.get("spark.executor.cores", "8")))
+
+    data = dataset.load()
+
+    data = data.repartition(execs * cores * partitions_coefficient).cache()
+    data.write.mode("overwrite").format("noop").save()
+    return data
+
+
 def get_spark_session(partitions_num: Optional[int] = None):
     partitions_num = partitions_num if partitions_num else BUCKET_NUMS
 
