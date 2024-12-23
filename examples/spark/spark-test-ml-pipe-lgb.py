@@ -1,31 +1,17 @@
 import logging.config
 
-import pyspark.sql.functions as sf
-
-from examples_utils import get_dataset
+from examples_utils import get_dataset, load_data
 from examples_utils import get_spark_session
-from examples_utils import prepare_test_and_train
-from lightautoml.pipelines.selection.importance_based import ImportanceCutoffSelector
-from lightautoml.pipelines.selection.importance_based import (
-    ModelBasedImportanceEstimator,
-)
-from pyspark.ml import PipelineModel
-
-from sparklightautoml.dataset.base import SparkDataset
-from sparklightautoml.dataset.persistence import CompositePlainCachePersistenceManager, PlainCachePersistenceManager
+from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
 from sparklightautoml.ml_algo.boost_lgbm import SparkBoostLGBM
-from sparklightautoml.pipelines.features.lgb_pipeline import SparkLGBAdvancedPipeline
 from sparklightautoml.pipelines.features.lgb_pipeline import SparkLGBSimpleFeatures
 from sparklightautoml.pipelines.ml.base import SparkMLPipeline
-from sparklightautoml.pipelines.selection.base import BugFixSelectionPipelineWrapper
-from sparklightautoml.pipelines.selection.base import SparkSelectionPipelineWrapper
 from sparklightautoml.reader.base import SparkToSparkReader
 from sparklightautoml.tasks.base import SparkTask as SparkTask
 from sparklightautoml.utils import VERBOSE_LOGGING_FORMAT
 from sparklightautoml.utils import log_exec_time
 from sparklightautoml.utils import logging_config
 from sparklightautoml.validation.iterators import SparkFoldsIterator
-
 
 logging.config.dictConfig(logging_config(level=logging.DEBUG, log_filename="/tmp/slama.log"))
 logging.basicConfig(level=logging.DEBUG, format=VERBOSE_LOGGING_FORMAT)
@@ -54,12 +40,18 @@ if __name__ == "__main__":
     }
 
     with log_exec_time():
-        train_df, test_df = prepare_test_and_train(dataset, seed)
+        data = load_data(dataset)
 
         task = SparkTask(dataset.task_type)
         score = task.get_dataset_metric()
         sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
-        spark_ml_algo = SparkBoostLGBM(freeze_defaults=False)
+        spark_ml_algo = SparkBoostLGBM(
+            default_params={
+                "numIterations": 50,
+            },
+            freeze_defaults=True,
+            execution_mode="bulk"
+        )
         spark_features_pipeline = SparkLGBSimpleFeatures()
         # spark_features_pipeline = SparkLGBAdvancedPipeline(**ml_alg_kwargs)
 
@@ -70,7 +62,7 @@ if __name__ == "__main__":
             post_selection=None,
         )
 
-        sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)
+        sdataset = sreader.fit_read(data, roles=dataset.roles, persistence_manager=persistence_manager)
 
         iterator = SparkFoldsIterator(sdataset, n_folds=cv)
 
