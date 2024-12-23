@@ -215,11 +215,11 @@ function submit_job_k8s() {
     --conf 'spark.scheduler.minRegisteredResourcesRatio=1.0' \
     --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
     --conf 'spark.task.maxFailures=1' \
-    --conf 'spark.driver.cores=2' \
-    --conf 'spark.driver.memory=16g' \
-    --conf 'spark.executor.instances=1' \
-    --conf 'spark.executor.cores=4' \
-    --conf 'spark.executor.memory=256g' \
+    --conf "spark.driver.cores=${SPARK_DRIVER_CORES}" \
+    --conf "spark.driver.memory=${SPARK_DRIVER_MEMORY}" \
+    --conf "spark.executor.instances=${SPARK_EXECUTOR_INSTANCES}" \
+    --conf "spark.executor.cores=${SPARK_EXECUTOR_CORES}" \
+    --conf "spark.executor.memory=${SPARK_EXECUTOR_MEMORY}" \
     --conf 'spark.cores.max=4' \
     --conf 'spark.memory.fraction=0.6' \
     --conf 'spark.memory.storageFraction=0.5' \
@@ -228,7 +228,7 @@ function submit_job_k8s() {
     --conf "spark.kubernetes.container.image=${IMAGE}" \
     --conf 'spark.kubernetes.namespace='${KUBE_NAMESPACE} \
     --conf 'spark.kubernetes.authenticate.driver.serviceAccountName=spark' \
-    --conf 'spark.kubernetes.memoryOverheadFactor=0.4' \
+    --conf "spark.kubernetes.memoryOverheadFactor=${SPARK_MEMORY_OVERHEAD_FACTOR}" \
     --conf "spark.kubernetes.driver.label.appname=${CONFIG_SUFFIX}" \
     --conf "spark.kubernetes.executor.label.appname=${CONFIG_SUFFIX}" \
     --conf 'spark.kubernetes.executor.deleteOnTermination=false' \
