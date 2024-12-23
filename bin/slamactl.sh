@@ -200,10 +200,10 @@ function submit_job_k8s() {
   script_path=$1
 
   filename=$(echo ${script_path} | python -c 'import os; path = input(); print(os.path.splitext(os.path.basename(path))[0]);')
-  local TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  local TIMESTAMP=$(date +%Y%m%d_%H%M)
   local APP_ID="test_${filename}_${TIMESTAMP}"
   # std = d16g2c_e16g4c_k8mo_0.4
-  local CONFIG_SUFFIX="x40_${TIMESTAMP}_e${SPARK_EXECUTOR_MEMORY}"
+  local CONFIG_SUFFIX="${DATASET_NAME_SHORT}_${TIMESTAMP}_e${SPARK_EXECUTOR_MEMORY}"
 
   #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
   #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
@@ -222,7 +222,7 @@ function submit_job_k8s() {
     --conf "spark.executor.memory=${SPARK_EXECUTOR_MEMORY}" \
     --conf 'spark.cores.max=4' \
     --conf 'spark.memory.fraction=0.6' \
-    --conf 'spark.memory.storageFraction=0.5' \
+    --conf "spark.memory.storageFraction=${SPARK_MEMORY_STORAGE_FRACTION}" \
     --conf 'spark.sql.autoBroadcastJoinThreshold=100MB' \
     --conf 'spark.sql.execution.arrow.pyspark.enabled=true' \
     --conf "spark.kubernetes.container.image=${IMAGE}" \
