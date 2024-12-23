@@ -203,7 +203,7 @@ function submit_job_k8s() {
   local TIMESTAMP=$(date +%Y%m%d_%H%M%S)
   local APP_ID="test_${filename}_${TIMESTAMP}"
   # std = d16g2c_e16g4c_k8mo_0.4
-  local CONFIG_SUFFIX="x40_${TIMESTAMP}_e256g"
+  local CONFIG_SUFFIX="x40_${TIMESTAMP}_e${SPARK_EXECUTOR_MEMORY}"
 
   #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
   #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
