@@ -200,13 +200,27 @@ function submit_job_k8s() {
   script_path=$1
 
   filename=$(echo ${script_path} | python -c 'import os; path = input(); print(os.path.splitext(os.path.basename(path))[0]);')
-  local TIMESTAMP=$(date +%Y%m%d_%H%M)
-  local APP_ID="test_${filename}_${TIMESTAMP}"
-  # std = d16g2c_e16g4c_k8mo_0.4
-  local CONFIG_SUFFIX="${DATASET_NAME_SHORT}_${TIMESTAMP}_e${SPARK_EXECUTOR_MEMORY}"
-
-  #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
-  #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
+  local TIMESTAMP=$(date +%y%m%d_%H%M)
+  
+  # Format the memory storage fraction (remove dot and pad with zeros)
+  local MSF=$(echo ${SPARK_MEMORY_STORAGE_FRACTION} | sed 's/0\.//' | awk '{printf "%03d", $1}')
+  
+  # Format memory overhead factor (remove dot and ensure two digits)
+  local MOF=$(echo ${SPARK_MEMORY_OVERHEAD_FACTOR} | sed 's/0\.//' | awk '{printf "%02d", $1}')
+  
+  # Remove 'g' from executor memory
+  local MEM=$(echo ${SPARK_EXECUTOR_MEMORY} | sed 's/g$//')
+  
+  # Create full and short versions of CONFIG_SUFFIX
+  local FULL_SUFFIX="${PIPELINE_NAME_SHORT}_${DATASET_NAME_SHORT}_${TIMESTAMP}_e${SPARK_EXECUTOR_INSTANCES}i${MSF}msf${MEM}g${MOF}f"
+  local SHORT_SUFFIX="${PIPELINE_NAME_SHORT}_${DATASET_NAME_SHORT}_${TIMESTAMP}"
+  
+  # Use short version if full version is too long, this is a system limitation
+  if [ ${#FULL_SUFFIX} -ge 64 ]; then
+    local CONFIG_SUFFIX="${SHORT_SUFFIX}"
+  else
+    local CONFIG_SUFFIX="${FULL_SUFFIX}"
+  fi
 
   spark-submit \
     --master k8s://${APISERVER} \
@@ -234,6 +248,12 @@ function submit_job_k8s() {
     --conf 'spark.kubernetes.executor.deleteOnTermination=false' \
     --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
     --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
+    --conf "spark.kubernetes.driverEnv.DATASET_NAME=${DATASET_NAME}" \
+    --conf "spark.kubernetes.executorEnv.DATASET_NAME=${DATASET_NAME}" \
+    --conf "spark.kubernetes.driverEnv.SPARK_EXECUTOR_INSTANCES=${SPARK_EXECUTOR_INSTANCES}" \
+    --conf "spark.kubernetes.executorEnv.SPARK_EXECUTOR_INSTANCES=${SPARK_EXECUTOR_INSTANCES}" \
+    --conf "spark.kubernetes.driverEnv.SPARK_EXECUTOR_CORES=${SPARK_EXECUTOR_CORES}" \
+    --conf "spark.kubernetes.executorEnv.SPARK_EXECUTOR_CORES=${SPARK_EXECUTOR_CORES}" \
     --conf 'spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir' \
     --conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*' \
     --conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*' \
