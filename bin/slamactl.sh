@@ -216,7 +216,7 @@ function submit_job_k8s() {
   local SHORT_SUFFIX="${PIPELINE_NAME_SHORT}_${DATASET_NAME_SHORT}_${TIMESTAMP}"
   
   # Use short version if full version is too long, this is a system limitation
-  if [ ${#FULL_SUFFIX} -ge 64 ]; then
+  if [ ${#FULL_SUFFIX} -ge 63 ]; then
     local CONFIG_SUFFIX="${SHORT_SUFFIX}"
   else
     local CONFIG_SUFFIX="${FULL_SUFFIX}"
