@@ -59,6 +59,7 @@ if __name__ == "__main__":
               "numIterations": 50,
             },
             freeze_defaults=True,
+            # chunk_size=10_000,
             # execution_mode="bulk",
             execution_mode="streaming",
         )
