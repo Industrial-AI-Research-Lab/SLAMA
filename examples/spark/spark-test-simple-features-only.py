@@ -39,7 +39,10 @@ if __name__ == "__main__":
     # dataset_name = "small_used_cars_dataset"
     # dataset_name = "used_cars_dataset"
     # dataset_name = "used_cars_dataset_4x"
-    dataset_name = "used_cars_dataset_40x"
+    # dataset_name = "used_cars_dataset_40x"
+    # dataset_name = "company_bankruptcy_dataset"
+    # dataset_name = "company_bankruptcy_dataset_100x"
+    dataset_name = "company_bankruptcy_dataset_10000x"
     dataset = get_dataset(dataset_name)
 
     # TODO: there is some problem with composite persistence manager on kubernetes. Need to research later.

@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     seed = 42
     cv = 5
-    dataset_name = os.getenv('DATASET_NAME', 'lama_test_dataset')
+    dataset_name = os.getenv('DATASET_NAME', 'company_bankruptcy_dataset_100x')
     # dataset_name = "used_cars_dataset"
     dataset = get_dataset(dataset_name)
 
@@ -57,7 +57,9 @@ if __name__ == "__main__":
               "numIterations": 50,
             },
             freeze_defaults=True,
-            execution_mode="bulk",
+            # chunk_size=10_000,
+            # execution_mode="bulk",
+            execution_mode="streaming",
         )
 
         ml_pipe = SparkMLPipeline(ml_algos=[spark_ml_algo])
