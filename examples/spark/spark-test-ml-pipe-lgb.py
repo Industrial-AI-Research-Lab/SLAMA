@@ -1,4 +1,5 @@
 import logging.config
+import os
 
 from examples_utils import get_dataset, load_data
 from examples_utils import get_spark_session
@@ -28,7 +29,7 @@ if __name__ == "__main__":
 
     seed = 42
     cv = 5
-    dataset_name = "lama_test_dataset"
+    dataset_name = os.getenv('DATASET_NAME', 'lama_test_dataset')
     dataset = get_dataset(dataset_name)
 
     ml_alg_kwargs = {
