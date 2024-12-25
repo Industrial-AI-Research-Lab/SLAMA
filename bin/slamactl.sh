@@ -205,8 +205,8 @@ function submit_job_k8s() {
   # Format the memory storage fraction (remove dot and pad with zeros)
   local MSF=$(echo ${SPARK_MEMORY_STORAGE_FRACTION} | sed 's/0\.//' | awk '{printf "%03d", $1}')
   
-  # Format memory overhead factor (remove dot and ensure two digits)
-  local MOF=$(echo ${SPARK_MEMORY_OVERHEAD_FACTOR} | sed 's/0\.//' | awk '{printf "%02d", $1}')
+  # Format memory overhead factor (remove dot and ensure three digits)
+  local MOF=$(echo ${SPARK_MEMORY_OVERHEAD_FACTOR} | sed 's/0\.//' | awk '{printf "%03d", $1}')
   
   # Remove 'g' from executor memory
   local MEM=$(echo ${SPARK_EXECUTOR_MEMORY} | sed 's/g$//')
