@@ -199,11 +199,11 @@ function submit_job_k8s() {
     --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
     --conf 'spark.task.maxFailures=1' \
     --conf 'spark.driver.cores=2' \
-    --conf 'spark.driver.memory=16g' \
-    --conf 'spark.executor.instances=1' \
+    --conf 'spark.driver.memory=32g' \
+    --conf 'spark.executor.instances=6' \
     --conf 'spark.executor.cores=4' \
     --conf 'spark.executor.memory=16g' \
-    --conf 'spark.cores.max=4' \
+    --conf 'spark.cores.max=24' \
     --conf 'spark.memory.fraction=0.6' \
     --conf 'spark.memory.storageFraction=0.5' \
     --conf 'spark.sql.autoBroadcastJoinThreshold=100MB' \
