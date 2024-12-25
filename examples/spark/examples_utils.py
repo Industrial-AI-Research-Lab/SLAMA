@@ -100,6 +100,12 @@ DATASETS = {
     "company_bankruptcy_dataset": Dataset(
         path=ds_path("company_bankruptcy_prediction_data.csv"), task_type="binary", roles={"target": "Bankrupt?"}
     ),
+    "company_bankruptcy_dataset_100x": Dataset(
+        path=ds_path("company_bankruptcy_prediction_data_100x.csv"), task_type="binary", roles={"target": "Bankrupt?"}
+    ),
+    "company_bankruptcy_dataset_10000x": Dataset(
+        path=ds_path("company_bankruptcy_prediction_data_100x.csv"), task_type="binary", roles={"target": "Bankrupt?"}
+    ),
 }
 
 
