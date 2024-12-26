@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         sdataset = sreader.fit_read(data, roles=dataset.roles, persistence_manager=persistence_manager)
 
-        iterator = SparkFoldsIterator(sdataset, n_folds=cv)
+        iterator = SparkFoldsIterator(sdataset, n_folds=cv).convert_to_holdout_iterator()
 
         oof_preds_ds = ml_pipe.fit_predict(iterator).persist()
         oof_score = score(oof_preds_ds[:, spark_ml_algo.prediction_feature])
