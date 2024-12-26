@@ -48,7 +48,7 @@ if __name__ == "__main__":
         sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
         spark_ml_algo = SparkBoostLGBM(
             default_params={
-                "numIterations": 50,
+                "numIterations": 10,
             },
             freeze_defaults=True,
             execution_mode="bulk"

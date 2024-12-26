@@ -30,14 +30,20 @@ class Dataset:
     dtype: Dict[str, str] = field(default_factory=dict)
     file_format: str = "csv"
     file_format_options: Dict[str, Any] = field(default_factory=lambda: {"header": True, "escape": '"'})
+    remove_service_columns: bool = False
 
     def load(self) -> SparkDataFrame:
         spark = get_current_session()
-        return spark.read.format(self.file_format).options(**self.file_format_options).load(self.path)
+        df = spark.read.format(self.file_format).options(**self.file_format_options).load(self.path)
+        if self.remove_service_columns:
+            cols = [c for c in df.columns if c not in ['_id', 'reader_fold_num']]
+            df = df.select(*cols)
+        return df
 
 
 def ds_path(rel_path: str) -> str:
     return os.path.join(BASE_DATASETS_PATH, rel_path)
+
 
 used_cars_params = {
     "task_type": "reg",
@@ -77,14 +83,11 @@ used_cars_params = {
 
 
 used_cars_preproc_params = {
+    "remove_service_columns": True,
     "file_format": "parquet",
     "task_type": "reg",
     "roles": {
-        "target": "price",
-        "drop": [
-            "_id",
-            "reader_fold_num"
-        ],
+        "target": "price"
     }
 }
 
