@@ -77,9 +77,14 @@ used_cars_params = {
 
 
 used_cars_preproc_params = {
+    "file_format": "parquet",
     "task_type": "reg",
     "roles": {
         "target": "price",
+        "drop": [
+            "_id",
+            "reader_fold_num"
+        ],
     }
 }
 
