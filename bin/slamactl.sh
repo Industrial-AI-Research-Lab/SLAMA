@@ -204,14 +204,14 @@ function submit_job_k8s() {
     --conf 'spark.executor.cores=4' \
     --conf 'spark.executor.memory=16g' \
     --conf 'spark.cores.max=24' \
-    --conf 'spark.memory.fraction=0.6' \
+    --conf 'spark.memory.fraction=0.05' \
     --conf 'spark.memory.storageFraction=0.5' \
+    --conf 'spark.kubernetes.memoryOverheadFactor=4.2' \
     --conf 'spark.sql.autoBroadcastJoinThreshold=100MB' \
     --conf 'spark.sql.execution.arrow.pyspark.enabled=true' \
     --conf "spark.kubernetes.container.image=${IMAGE}" \
     --conf 'spark.kubernetes.namespace='${KUBE_NAMESPACE} \
     --conf 'spark.kubernetes.authenticate.driver.serviceAccountName=spark' \
-    --conf 'spark.kubernetes.memoryOverheadFactor=0.4' \
     --conf "spark.kubernetes.driver.label.appname=${filename}" \
     --conf "spark.kubernetes.executor.label.appname=${filename}" \
     --conf 'spark.kubernetes.executor.deleteOnTermination=false' \

@@ -103,6 +103,10 @@ DATASETS = {
     "used_cars_dataset_10x": Dataset(path=ds_path("used_cars_10x_dataset.csv"), **used_cars_params),
     "used_cars_dataset_40x": Dataset(path=ds_path("used_cars_40x_dataset.csv"), **used_cars_params),
     "used_cars_dataset_100x": Dataset(path=ds_path("used_cars_100x_dataset.csv"), **used_cars_params),
+    "used_cars_dataset_100x_preproc": Dataset(
+        path=f"{BASE_PREFIX}/opt/preprocessed_datasets/used_cars_dataset_100x.slama/data.parquet",
+        **used_cars_preproc_params
+    ),
     "lama_test_dataset": Dataset(
         path=ds_path("sampled_app_train.csv"), task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
         # path=ds_path("100k_sampled_app_train.csv"), task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
