@@ -18,7 +18,8 @@ from sparklightautoml.utils import get_current_session
 
 BUCKET_NUMS = 6
 PERSISTENCE_MANAGER_ENV_VAR = "PERSISTENCE_MANAGER"
-BASE_DATASETS_PATH = "hdfs://node21.bdcl:9000/opt/spark_data/"
+BASE_PREFIX = "hdfs://node21.bdcl:9000"
+BASE_DATASETS_PATH = f"{BASE_PREFIX}/opt/spark_data/"
 
 
 @dataclass(frozen=True)
@@ -37,7 +38,6 @@ class Dataset:
 
 def ds_path(rel_path: str) -> str:
     return os.path.join(BASE_DATASETS_PATH, rel_path)
-
 
 used_cars_params = {
     "task_type": "reg",
@@ -75,7 +75,19 @@ used_cars_params = {
     },
 }
 
+
+used_cars_preproc_params = {
+    "task_type": "reg",
+    "roles": {
+        "target": "price",
+    }
+}
+
 DATASETS = {
+    "small_used_cars_dataset_preproc": Dataset(
+        path=f"{BASE_PREFIX}/opt/preprocessed_datasets/small_used_cars_dataset.slama/data.parquet",
+        **used_cars_preproc_params
+    ),
     "small_used_cars_dataset": Dataset(path=ds_path("small_used_cars_data.csv"), **used_cars_params),
     "used_cars_dataset": Dataset(path=ds_path("used_cars_data.csv"), **used_cars_params),
     # "used_cars_dataset_1x": Dataset(path=ds_path("derivative_datasets/1x_dataset.csv"), **used_cars_params),

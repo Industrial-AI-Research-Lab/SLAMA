@@ -28,7 +28,8 @@ if __name__ == "__main__":
 
     seed = 42
     cv = 5
-    dataset_name = "lama_test_dataset"
+    # dataset_name = "lama_test_dataset"
+    dataset_name = "small_used_cars_dataset_preproc"
     dataset = get_dataset(dataset_name)
 
     ml_alg_kwargs = {

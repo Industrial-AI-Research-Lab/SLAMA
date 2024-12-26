@@ -31,10 +31,10 @@ if __name__ == "__main__":
         "top_intersections": 4,
     }
     # dataset_name = "lama_test_dataset"
-    dataset_name = "small_used_cars_dataset"
+    # dataset_name = "small_used_cars_dataset"
     # dataset_name = "used_cars_dataset"
     # dataset_name = "used_cars_dataset_4x"
-    # dataset_name = "used_cars_dataset_10x"
+    dataset_name = "used_cars_dataset_10x"
     # dataset_name = "company_bankruptcy_dataset"
     # dataset_name = "company_bankruptcy_dataset_100x"
     # dataset_name = "company_bankruptcy_dataset_10000x"
