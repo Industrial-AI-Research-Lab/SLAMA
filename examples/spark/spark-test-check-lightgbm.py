@@ -2,7 +2,7 @@ import logging
 import os
 import signal
 import sys
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Tuple
 import psutil
 from pyspark.sql import functions as sf
 from pyspark.ml.feature import VectorAssembler
@@ -134,6 +134,32 @@ def load_data(spark: SparkSession, data_path: str, partitions_coefficient: int =
     return data
 
 
+def load_test_and_train(
+    spark: SparkSession, data_path: str, seed: int = 42, test_size: float = 0.2, partitions_coefficient: int = 1
+) -> Tuple[DataFrame, DataFrame]:
+    assert 0 <= test_size <= 1
+
+    data = spark.read.parquet(data_path)
+
+    data = data.na.fill(0.0)
+    data = data.select(
+        *(
+            sf.col(c).alias(c.replace('[', '__').replace(']', '__'))
+            for c in data.columns
+        )
+    )
+
+    execs = int(spark.conf.get("spark.executor.instances", "1"))
+    cores = int(spark.conf.get("spark.executor.cores", "8"))
+
+    data = data.repartition(execs * cores * partitions_coefficient).cache()
+    data.write.mode("overwrite").format("noop").save()
+
+    train_data, test_data = data.randomSplit([1 - test_size, test_size], seed)
+
+    return train_data, test_data
+
+
 def clean_java_processes():
     if os.environ.get("SCRIPT_ENV", None) == "cluster":
         pids = [proc.pid for proc in psutil.process_iter() if "java" in proc.name()]
@@ -152,9 +178,7 @@ def main():
 
     spark = get_spark_session()
 
-    # dataset_name = "company_bankruptcy_dataset"
-    # dataset_name = "lama_test_dataset"
-    train_df = load_data(
+    train_df, test_df = load_test_and_train(
         spark=spark,
         data_path=f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}_1part.slama/data.parquet"
     )
@@ -174,9 +198,14 @@ def main():
             raise ValueError()
 
     df = assembler.transform(train_df)
-    _ = lgbm.fit(df)
-
+    model = lgbm.fit(df)
     print("Training is finished")
+
+    df = assembler.transform(test_df)
+    predicts_df = model.transform(df)
+    predicts_df.write.mode("overwrite").format("noop").save()
+    print("Predicting is finished")
+
     spark.stop()
     clean_java_processes()
 
