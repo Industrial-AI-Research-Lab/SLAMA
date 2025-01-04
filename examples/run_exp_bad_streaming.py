@@ -174,5 +174,5 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s %(threadName)s %(levelname)s %(filename)s:%(lineno)d %(message)s"
     )
-    main_compile_results()
-    # asyncio.run(main_run_experiments())
+    # main_compile_results()
+    asyncio.run(main_run_experiments())
