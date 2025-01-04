@@ -35,7 +35,7 @@ def get_lightgbm_params(dataset_name: str) -> Dict[str, Any]:
     match dataset_name:
         case "company_bankruptcy_dataset":
             dataset_specific_params = {
-                'labelCol': 'TARGET',
+                'labelCol': "Bankrupt?",
                 'objective': 'binary',
                 'metric': 'auc',
                 'rawPredictionCol': 'raw_prediction',
@@ -75,21 +75,13 @@ def get_spark_session(partitions_num: Optional[int] = None):
     if os.environ.get("SCRIPT_ENV", None) == "cluster":
         spark_sess = SparkSession.builder.getOrCreate()
     else:
-        # Be aware, this an alternative way to supply SLAMA with its jars using maven repository
-        # Example requesting both synapseml and SLAMA jar from Maven Central
-        # .config("spark.jars.packages",
-        #         "com.microsoft.azure:synapseml_2.12:0.9.5,io.github.fonhorst:spark-lightautoml_2.12:0.1.1")
 
-        extra_jvm_options = ("-Dio.netty.tryReflectionSetAccessible=true "
-                             "-Dlog4j.debug=false "
-                             "-Dlog4j.configuration=examples/spark/log4j.properties")
+        extra_jvm_options = "-Dio.netty.tryReflectionSetAccessible=true "
 
         spark_sess = (
             SparkSession.builder.master(f"local[{partitions_num}]")
-            # .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:0.9.5")
-            # .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:0.11.1-spark3.3")
+            # .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:1.0.8")
             .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:1.0.8")
-            # .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:0.11.1")
             .config("spark.jars", "jars/spark-lightautoml_2.12-0.1.1.jar")
             .config("spark.jars.repositories", "https://mmlspark.azureedge.net/maven")
             .config("spark.driver.extraJavaOptions", extra_jvm_options)
@@ -104,7 +96,6 @@ def get_spark_session(partitions_num: Optional[int] = None):
             .config("spark.driver.memory", "4g")
             .config("spark.executor.memory", "4g")
             .config("spark.sql.execution.arrow.pyspark.enabled", "true")
-            .config("spark.sql.autoBroadcastJoinThreshold", "-1")
             .getOrCreate()
         )
 
@@ -130,10 +121,11 @@ def load_data(spark: SparkSession, data_path: str, partitions_coefficient: int =
 def main():
     spark = get_spark_session()
 
-    dataset_name = "company_bankruptcy_dataset"
+    # dataset_name = "company_bankruptcy_dataset"
+    dataset_name = "lama_test_dataset"
     train_df = load_data(
         spark=spark,
-        data_path=f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama"
+        data_path=f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}_1part.slama/data.parquet"
     )
 
     print(f"ASSEMBLED DATASET SIZE: {train_df.count()}")
@@ -150,6 +142,7 @@ def main():
         case _:
             raise ValueError()
 
+    train_df = train_df.na.fill(0.0)
     df = assembler.transform(train_df)
     _ = lgbm.fit(df)
 

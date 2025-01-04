@@ -206,7 +206,7 @@ function submit_job_k8s() {
     --conf 'spark.cores.max=24' \
     --conf 'spark.memory.fraction=0.05' \
     --conf 'spark.memory.storageFraction=0.5' \
-    --conf 'spark.kubernetes.memoryOverheadFactor=4.2' \
+    --conf 'spark.kubernetes.memoryOverheadFactor=0.5' \
     --conf 'spark.sql.autoBroadcastJoinThreshold=100MB' \
     --conf 'spark.sql.execution.arrow.pyspark.enabled=true' \
     --conf "spark.kubernetes.container.image=${IMAGE}" \
