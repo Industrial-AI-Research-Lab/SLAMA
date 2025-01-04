@@ -1,14 +1,18 @@
 import asyncio
 import logging
-from typing import Any, Dict
+import os.path
+from typing import Any, Dict, Optional
 
 import pandas as pd
+import tqdm
 from kubernetes import client, config
+from tqdm.asyncio import tqdm
 
 
 logger = logging.getLogger(__name__)
 
 
+BASE_ARTIFACT_FOLDER = "tmp"
 NAMESPACE = "nbutakov"
 
 
@@ -51,7 +55,7 @@ async def run_exp(sem: asyncio.Semaphore,
                   exec_instances: int,
                   exec_cores: int,
                   dataset_name: str,
-                  exp_name: str) -> str:
+                  exp_name: str) -> Optional[str]:
     async with sem:
         try:
             max_cores = exec_instances * exec_cores
@@ -61,7 +65,10 @@ async def run_exp(sem: asyncio.Semaphore,
                    f"./bin/slamactl.sh submit-job-k8s "
                    f"examples/spark/spark-test-check-lightgbm.py {dataset_name}")
 
-            with open(f"{exp_name}.stdout", "w") as stdout, open(f"{exp_name}.stderr", "w") as stderr:
+            stdout_path = os.path.join(BASE_ARTIFACT_FOLDER, f"{exp_name}.stdout",)
+            stderr_path = os.path.join(BASE_ARTIFACT_FOLDER, f"{exp_name}.stderr",)
+
+            with open(stdout_path, "w") as stdout, open(stderr_path, "w") as stderr:
                 proc = await asyncio.create_subprocess_shell(
                     cmd,
                     # stdout=asyncio.subprocess.PIPE,
@@ -75,6 +82,7 @@ async def run_exp(sem: asyncio.Semaphore,
             assert proc.returncode == 0
         except:
             logger.warning("Error during exp running", exc_info=True)
+            return None
 
         return exp_name
 
@@ -85,16 +93,16 @@ async def main(max_concurrency: int = 10):
 
     datasets = [
         "lama_test_dataset",
-        # "company_bankruptcy_dataset",
-        # "used_cars_dataset",
-        # "adv_used_cars_dataset"
+        "company_bankruptcy_dataset",
+        "used_cars_dataset",
+        "adv_used_cars_dataset"
     ]
 
     spark_settings = [
         {"exec_instances": 1, "exec_cores": 1},
-        # {"exec_instances": 1, "exec_cores": 4},
-        # {"exec_instances": 2, "exec_cores": 1},
-        # {"exec_instances": 2, "exec_cores": 2}
+        {"exec_instances": 1, "exec_cores": 4},
+        {"exec_instances": 2, "exec_cores": 1},
+        {"exec_instances": 2, "exec_cores": 2}
     ]
 
     configs = [
@@ -111,15 +119,16 @@ async def main(max_concurrency: int = 10):
 
     logger.info(f"Running experiments. Num experiments: {len(configs)}. Max concurrency: {max_concurrency}.")
 
-    tasks = [asyncio.create_task(run_exp(sem=sem, **config)) for config in configs]
+    tasks = [run_exp(sem=sem, **config) for config in configs]
 
-    exp_names = await asyncio.gather(*tasks, return_exceptions=True)
+    # exp_names = await tqdm.gather(*tasks)
+    exp_names = await tqdm.gather(*tasks)
 
     logger.info("Finished experiments. Collecting results...")
 
-    records = [get_exp_record(exp_name) for exp_name in exp_names if isinstance(exp_name, str)]
+    records = [get_exp_record(exp_name) for exp_name in exp_names if exp_name]
 
-    logger.info("Writing results as a DataFrame in json-format..")
+    logger.info(f"Writing results as a DataFrame in json-format... (records count {len(records)})")
     df = pd.DataFrame(records)
     df.to_json("streaming_runs_exps.json")
     logger.info("All Finished")
