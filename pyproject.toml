@@ -68,6 +68,9 @@ tox = "*"
 hdfs = "^2.7.0"
 
 
+[tool.poetry.group.dev.dependencies]
+kubernetes = "^31.0.0"
+
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "INFO"

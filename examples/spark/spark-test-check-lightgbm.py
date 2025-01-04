@@ -2,6 +2,7 @@ import logging
 import os
 import signal
 import sys
+import time
 from typing import Optional, Any, Dict, Tuple
 import psutil
 from pyspark.sql import functions as sf
@@ -171,6 +172,7 @@ def load_test_and_train(
 
 def clean_java_processes():
     if os.environ.get("SCRIPT_ENV", None) == "cluster":
+        time.sleep(10)
         pids = [proc.pid for proc in psutil.process_iter() if "java" in proc.name()]
         print(f"Found unstopped java processes: {pids}")
         for pid in pids:

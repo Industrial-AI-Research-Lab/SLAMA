@@ -207,6 +207,11 @@ function submit_job_k8s() {
     SLAMA_MAX_CORES=4
   fi
 
+  if [[ -z "${SLAMA_RUN_NAME}" ]]
+  then
+    SLAMA_RUN_NAME="default"
+  fi
+
   spark-submit \
     --master k8s://${APISERVER} \
     --deploy-mode cluster \
@@ -229,7 +234,9 @@ function submit_job_k8s() {
     --conf 'spark.kubernetes.namespace='${KUBE_NAMESPACE} \
     --conf 'spark.kubernetes.authenticate.driver.serviceAccountName=spark' \
     --conf "spark.kubernetes.driver.label.appname=${filename}" \
+    --conf "spark.kubernetes.driver.label.runname=${SLAMA_RUN_NAME}" \
     --conf "spark.kubernetes.executor.label.appname=${filename}" \
+    --conf "spark.kubernetes.executor.label.runname=${SLAMA_RUN_NAME}" \
     --conf 'spark.kubernetes.executor.deleteOnTermination=false' \
     --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
     --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
