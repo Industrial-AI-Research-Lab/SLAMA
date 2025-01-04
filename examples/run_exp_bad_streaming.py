@@ -77,9 +77,9 @@ async def main(max_concurrency: int = 10):
 
     datasets = [
         "lama_test_dataset",
-        "company_bankruptcy_dataset",
-        "used_cars_dataset",
-        "adv_used_cars_dataset"
+        # "company_bankruptcy_dataset",
+        # "used_cars_dataset",
+        # "adv_used_cars_dataset"
     ]
 
     spark_settings = [
@@ -90,7 +90,11 @@ async def main(max_concurrency: int = 10):
     ]
 
     configs = [
-        {"dataset_name": dataset_name, "exp_name": "", **settings}
+        {
+            "dataset_name": dataset_name,
+            "exp_name": f"{dataset_name}__{settings['exec_instances']}_{settings['exec_cores']}",
+            **settings
+        }
         for dataset_name in datasets
         for settings in spark_settings
     ]
