@@ -53,20 +53,28 @@ async def run_exp(sem: asyncio.Semaphore,
                   dataset_name: str,
                   exp_name: str) -> str:
     async with sem:
-        max_cores = exec_instances * exec_cores
-        cmd = (f"REPO=node2.bdcl:5000 KUBE_NAMESPACE={NAMESPACE} "
-               f"SLAMA_EXEC_INSTANCES={exec_instances} SLAMA_EXEC_CORES={exec_cores} "
-               f"SLAMA_MAX_CORES={max_cores} SLAMA_RUN_NAME={exp_name} "
-               f"./bin/slamactl.sh submit-job-k8s "
-               f"examples/spark/spark-test-check-lightgbm.py {dataset_name}")
+        try:
+            max_cores = exec_instances * exec_cores
+            cmd = (f"REPO=node2.bdcl:5000 KUBE_NAMESPACE={NAMESPACE} "
+                   f"SLAMA_EXEC_INSTANCES={exec_instances} SLAMA_EXEC_CORES={exec_cores} "
+                   f"SLAMA_MAX_CORES={max_cores} SLAMA_RUN_NAME={exp_name} "
+                   f"./bin/slamactl.sh submit-job-k8s "
+                   f"examples/spark/spark-test-check-lightgbm.py {dataset_name}")
 
-        proc = await asyncio.create_subprocess_shell(
-            cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+            with open(f"{exp_name}.stdout", "w") as stdout, open(f"{exp_name}.stderr", "w") as stderr:
+                proc = await asyncio.create_subprocess_shell(
+                    cmd,
+                    # stdout=asyncio.subprocess.PIPE,
+                    # stderr=asyncio.subprocess.PIPE
+                    stdout=stdout,
+                    stderr=stderr
+                )
 
-        await proc.wait()
+            await proc.wait()
+
+            assert proc.returncode == 0
+        except:
+            logger.warning("Error during exp running", exc_info=True)
 
         return exp_name
 
@@ -84,9 +92,9 @@ async def main(max_concurrency: int = 10):
 
     spark_settings = [
         {"exec_instances": 1, "exec_cores": 1},
-        {"exec_instances": 1, "exec_cores": 4},
-        {"exec_instances": 2, "exec_cores": 1},
-        {"exec_instances": 2, "exec_cores": 2}
+        # {"exec_instances": 1, "exec_cores": 4},
+        # {"exec_instances": 2, "exec_cores": 1},
+        # {"exec_instances": 2, "exec_cores": 2}
     ]
 
     configs = [

@@ -176,3 +176,7 @@ spark-warehouse
 
 # sphinx output folder
 html-docs
+
+*.stdout
+*.stderr
+streaming_runs_exps.json
