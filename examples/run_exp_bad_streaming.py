@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os.path
+import uuid
 from typing import Any, Dict, Optional, List
 
 import pandas as pd
@@ -102,22 +103,24 @@ async def run_exp(sem: asyncio.Semaphore,
 def make_configs() -> List[Dict[str, Any]]:
     datasets = [
         "lama_test_dataset",
-        "company_bankruptcy_dataset",
+        # "company_bankruptcy_dataset",
         "used_cars_dataset",
-        "adv_used_cars_dataset"
+        # "adv_used_cars_dataset"
     ]
 
     spark_settings = [
-        {"exec_instances": 1, "exec_cores": 1},
-        {"exec_instances": 1, "exec_cores": 4},
-        {"exec_instances": 2, "exec_cores": 1},
+        # {"exec_instances": 1, "exec_cores": 1},
+        # {"exec_instances": 1, "exec_cores": 4},
+        # {"exec_instances": 2, "exec_cores": 1},
         {"exec_instances": 2, "exec_cores": 2}
     ]
+
+    spark_settings = spark_settings * 10
 
     configs = [
         {
             "dataset_name": dataset_name,
-            "exp_name": f"{dataset_name}__{settings['exec_instances']}_{settings['exec_cores']}",
+            "exp_name": f"{dataset_name}__{settings['exec_instances']}_{settings['exec_cores']}__{uuid.uuid4()}",
             **settings
         }
         for dataset_name in datasets
@@ -133,15 +136,18 @@ def compile_results(exp_names: List[str]):
 
     logger.info(f"Writing results as a DataFrame in json-format... (records count {len(records)})")
     df = pd.DataFrame(records)
-    df.to_json("streaming_runs_exps.json")
+    df.to_json(os.path.join("tmp", "streaming_runs_exps.json"))
 
     logger.info("Finished writing results")
 
 
 def main_compile_results():
-    configs = make_configs()
-
-    exp_names = [config['exp_name'] for config in configs]
+    v1 = client.CoreV1Api()
+    ret = v1.list_namespaced_pod(namespace=NAMESPACE)
+    exp_names = [
+        pod.metadata.labels['runname'] for pod in ret.items
+        if pod.metadata.name.endswith('-driver') and 'runname' in pod.metadata.labels
+    ]
 
     compile_results(exp_names)
     logger.info("All Finished.")
@@ -153,13 +159,12 @@ async def main_run_experiments(max_concurrency: int = 10):
 
     configs = make_configs()
 
-    sem = asyncio.Semaphore(2)
+    sem = asyncio.Semaphore(5)
 
     logger.info(f"Running experiments. Num experiments: {len(configs)}. Max concurrency: {max_concurrency}.")
 
     tasks = [run_exp(sem=sem, **config) for config in configs]
 
-    # exp_names = await tqdm.gather(*tasks)
     exp_names = await tqdm.gather(*tasks)
 
     logger.info("Finished computing")

@@ -123,15 +123,6 @@ def get_spark_session(partitions_num: Optional[int] = None):
 
 
 def load_data(spark: SparkSession, data_path: str, partitions_coefficient: int = 1) -> DataFrame:
-    # data = spark.read.parquet(data_path)
-    #
-    # data = data.na.fill(0.0)
-    # data = data.select(
-    #     *(
-    #         sf.col(c).alias(c.replace('[', '__').replace(']', '__'))
-    #         for c in data.columns
-    #     )
-    # )
     data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
 
     execs = int(spark.conf.get("spark.executor.instances", "1"))
@@ -147,15 +138,6 @@ def load_test_and_train(
     spark: SparkSession, data_path: str, seed: int = 42, test_size: float = 0.2, partitions_coefficient: int = 1
 ) -> Tuple[DataFrame, DataFrame]:
     assert 0 <= test_size <= 1
-
-    # data = spark.read.parquet(data_path)
-    # data = data.na.fill(0.0)
-    # data = data.select(
-    #     *(
-    #         sf.col(c).alias(c.replace('[', '__').replace(']', '__'))
-    #         for c in data.columns
-    #     )
-    # )
 
     data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
 
