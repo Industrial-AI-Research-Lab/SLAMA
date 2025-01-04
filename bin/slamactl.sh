@@ -192,6 +192,20 @@ function submit_job_k8s() {
 
   #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
   #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
+  if [[ -z "${SLAMA_EXEC_INSTANCES}" ]]
+  then
+    SLAMA_EXEC_INSTANCES=1
+  fi
+
+  if [[ -z "${SLAMA_EXEC_CORES}" ]]
+  then
+    SLAMA_EXEC_CORES=4
+  fi
+
+  if [[ -z "${SLAMA_MAX_CORES}" ]]
+  then
+    SLAMA_MAX_CORES=4
+  fi
 
   spark-submit \
     --master k8s://${APISERVER} \
@@ -202,10 +216,10 @@ function submit_job_k8s() {
     --conf 'spark.task.maxFailures=1' \
     --conf 'spark.driver.cores=2' \
     --conf 'spark.driver.memory=32g' \
-    --conf 'spark.executor.instances=1' \
-    --conf 'spark.executor.cores=1' \
+    --conf "spark.executor.instances=${SLAMA_EXEC_INSTANCES}" \
+    --conf "spark.executor.cores=${SLAMA_EXEC_CORES}" \
     --conf 'spark.executor.memory=16g' \
-    --conf 'spark.cores.max=24' \
+    --conf "spark.cores.max=${SLAMA_MAX_CORES}" \
     --conf 'spark.memory.fraction=0.05' \
     --conf 'spark.memory.storageFraction=0.5' \
     --conf 'spark.kubernetes.memoryOverheadFactor=0.5' \
