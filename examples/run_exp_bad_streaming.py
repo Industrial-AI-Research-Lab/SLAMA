@@ -102,25 +102,28 @@ async def run_exp(sem: asyncio.Semaphore,
 
 def make_configs() -> List[Dict[str, Any]]:
     datasets = [
-        "lama_test_dataset",
-        # "company_bankruptcy_dataset",
-        "used_cars_dataset",
+        # "lama_test_dataset",
+        "company_bankruptcy_dataset",
+        # "used_cars_dataset",
         # "adv_used_cars_dataset"
     ]
 
     spark_settings = [
         # {"exec_instances": 1, "exec_cores": 1},
-        # {"exec_instances": 1, "exec_cores": 4},
+        {"exec_instances": 1, "exec_cores": 4},
         # {"exec_instances": 2, "exec_cores": 1},
-        {"exec_instances": 2, "exec_cores": 2}
+        # {"exec_instances": 2, "exec_cores": 2}
     ]
 
     spark_settings = spark_settings * 10
 
+    def _trim_to_size(exp_name: str) -> str:
+        return exp_name[:63]
+
     configs = [
         {
             "dataset_name": dataset_name,
-            "exp_name": f"{dataset_name}__{settings['exec_instances']}_{settings['exec_cores']}__{uuid.uuid4()}",
+            "exp_name": _trim_to_size(f"{dataset_name}__{settings['exec_instances']}_{settings['exec_cores']}__{uuid.uuid4()}"),
             **settings
         }
         for dataset_name in datasets
@@ -153,7 +156,7 @@ def main_compile_results():
     logger.info("All Finished.")
 
 
-async def main_run_experiments(max_concurrency: int = 10):
+async def main_run_experiments(max_concurrency: int = 5):
     logger.info(f"Cleaning namespaces {NAMESPACE}")
     clean_pods()
 
