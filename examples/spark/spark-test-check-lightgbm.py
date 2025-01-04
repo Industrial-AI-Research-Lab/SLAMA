@@ -68,6 +68,13 @@ def get_lightgbm_params(dataset_name: str) -> Dict[str, Any]:
                 'metric': 'rmse',
                 'predictionCol': 'prediction'
             }
+        case "adv_used_cars_dataset":
+            dataset_specific_params = {
+                'labelCol': "price",
+                'objective': 'regression',
+                'metric': 'rmse',
+                'predictionCol': 'prediction'
+            }
         case _:
             raise ValueError("Unknown dataset")
 
@@ -115,15 +122,16 @@ def get_spark_session(partitions_num: Optional[int] = None):
 
 
 def load_data(spark: SparkSession, data_path: str, partitions_coefficient: int = 1) -> DataFrame:
-    data = spark.read.parquet(data_path)
-
-    data = data.na.fill(0.0)
-    data = data.select(
-        *(
-            sf.col(c).alias(c.replace('[', '__').replace(']', '__'))
-            for c in data.columns
-        )
-    )
+    # data = spark.read.parquet(data_path)
+    #
+    # data = data.na.fill(0.0)
+    # data = data.select(
+    #     *(
+    #         sf.col(c).alias(c.replace('[', '__').replace(']', '__'))
+    #         for c in data.columns
+    #     )
+    # )
+    data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
 
     execs = int(spark.conf.get("spark.executor.instances", "1"))
     cores = int(spark.conf.get("spark.executor.cores", "8"))
@@ -139,15 +147,16 @@ def load_test_and_train(
 ) -> Tuple[DataFrame, DataFrame]:
     assert 0 <= test_size <= 1
 
-    data = spark.read.parquet(data_path)
+    # data = spark.read.parquet(data_path)
+    # data = data.na.fill(0.0)
+    # data = data.select(
+    #     *(
+    #         sf.col(c).alias(c.replace('[', '__').replace(']', '__'))
+    #         for c in data.columns
+    #     )
+    # )
 
-    data = data.na.fill(0.0)
-    data = data.select(
-        *(
-            sf.col(c).alias(c.replace('[', '__').replace(']', '__'))
-            for c in data.columns
-        )
-    )
+    data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
 
     execs = int(spark.conf.get("spark.executor.instances", "1"))
     cores = int(spark.conf.get("spark.executor.cores", "8"))
@@ -180,7 +189,7 @@ def main():
 
     train_df, test_df = load_test_and_train(
         spark=spark,
-        data_path=f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}_1part.slama/data.parquet"
+        data_path=f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/CSV/{dataset_name}.csv"
     )
 
     print(f"ASSEMBLED DATASET SIZE: {train_df.count()}")
