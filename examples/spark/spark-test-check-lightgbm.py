@@ -1,6 +1,7 @@
 import os
 from typing import Optional, Any, Dict
 
+from pyspark.sql import functions as sf
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql import SparkSession, DataFrame
 from synapse.ml.lightgbm import LightGBMClassifier, LightGBMRegressor
@@ -109,6 +110,14 @@ def get_spark_session(partitions_num: Optional[int] = None):
 def load_data(spark: SparkSession, data_path: str, partitions_coefficient: int = 1) -> DataFrame:
     data = spark.read.parquet(data_path)
 
+    data = data.na.fill(0.0)
+    data = data.select(
+        *(
+            sf.col(c).alias(c.replace('[', '__').replace(']', '__'))
+            for c in data.columns
+        )
+    )
+
     execs = int(spark.conf.get("spark.executor.instances", "1"))
     cores = int(spark.conf.get("spark.executor.cores", "8"))
 
@@ -121,8 +130,8 @@ def load_data(spark: SparkSession, data_path: str, partitions_coefficient: int =
 def main():
     spark = get_spark_session()
 
-    # dataset_name = "company_bankruptcy_dataset"
-    dataset_name = "lama_test_dataset"
+    dataset_name = "company_bankruptcy_dataset"
+    # dataset_name = "lama_test_dataset"
     train_df = load_data(
         spark=spark,
         data_path=f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}_1part.slama/data.parquet"
@@ -142,7 +151,6 @@ def main():
         case _:
             raise ValueError()
 
-    train_df = train_df.na.fill(0.0)
     df = assembler.transform(train_df)
     _ = lgbm.fit(df)
 
