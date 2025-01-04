@@ -159,7 +159,7 @@ async def main_run_experiments(max_concurrency: int = 10):
 
     configs = make_configs()
 
-    sem = asyncio.Semaphore(5)
+    sem = asyncio.Semaphore(max_concurrency)
 
     logger.info(f"Running experiments. Num experiments: {len(configs)}. Max concurrency: {max_concurrency}.")
 
@@ -180,4 +180,4 @@ if __name__ == "__main__":
         format="%(asctime)s %(threadName)s %(levelname)s %(filename)s:%(lineno)d %(message)s"
     )
     # main_compile_results()
-    asyncio.run(main_run_experiments())
+    asyncio.run(main_run_experiments(max_concurrency=5))
