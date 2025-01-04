@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os.path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import pandas as pd
 import tqdm
@@ -87,10 +87,7 @@ async def run_exp(sem: asyncio.Semaphore,
         return exp_name
 
 
-async def main(max_concurrency: int = 10):
-    logger.info(f"Cleaning namespaces {NAMESPACE}")
-    clean_pods()
-
+def make_configs() -> List[Dict[str, Any]]:
     datasets = [
         "lama_test_dataset",
         "company_bankruptcy_dataset",
@@ -115,6 +112,35 @@ async def main(max_concurrency: int = 10):
         for settings in spark_settings
     ]
 
+    return configs
+
+
+def compile_results(exp_names: List[str]):
+    logger.info("Collecting results...")
+    records = [get_exp_record(exp_name) for exp_name in exp_names if exp_name]
+
+    logger.info(f"Writing results as a DataFrame in json-format... (records count {len(records)})")
+    df = pd.DataFrame(records)
+    df.to_json("streaming_runs_exps.json")
+
+    logger.info("Finished writing results")
+
+
+def main_compile_results():
+    configs = make_configs()
+
+    exp_names = [config['exp_name'] for config in configs]
+
+    compile_results(exp_names)
+    logger.info("All Finished.")
+
+
+async def main_run_experiments(max_concurrency: int = 10):
+    logger.info(f"Cleaning namespaces {NAMESPACE}")
+    clean_pods()
+
+    configs = make_configs()
+
     sem = asyncio.Semaphore(10)
 
     logger.info(f"Running experiments. Num experiments: {len(configs)}. Max concurrency: {max_concurrency}.")
@@ -124,14 +150,11 @@ async def main(max_concurrency: int = 10):
     # exp_names = await tqdm.gather(*tasks)
     exp_names = await tqdm.gather(*tasks)
 
-    logger.info("Finished experiments. Collecting results...")
+    logger.info("Finished computing")
 
-    records = [get_exp_record(exp_name) for exp_name in exp_names if exp_name]
+    compile_results(exp_names)
 
-    logger.info(f"Writing results as a DataFrame in json-format... (records count {len(records)})")
-    df = pd.DataFrame(records)
-    df.to_json("streaming_runs_exps.json")
-    logger.info("All Finished")
+    logger.info("All Finished.")
 
 
 if __name__ == "__main__":
@@ -139,4 +162,5 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s %(threadName)s %(levelname)s %(filename)s:%(lineno)d %(message)s"
     )
-    asyncio.run(main())
+    # main_compile_results()
+    asyncio.run(main_run_experiments())
