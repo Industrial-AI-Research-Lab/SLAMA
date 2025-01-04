@@ -1,10 +1,17 @@
+import logging
 import os
+import signal
+import sys
 from typing import Optional, Any, Dict
-
+import psutil
 from pyspark.sql import functions as sf
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql import SparkSession, DataFrame
 from synapse.ml.lightgbm import LightGBMClassifier, LightGBMRegressor
+
+
+logger = logging.getLogger(__name__)
+
 
 GENERAL_RUN_PARAMS = {
     'featuresCol': 'Mod_0_LightGBM_vassembler_features',
@@ -127,10 +134,25 @@ def load_data(spark: SparkSession, data_path: str, partitions_coefficient: int =
     return data
 
 
+def clean_java_processes():
+    if os.environ.get("SCRIPT_ENV", None) == "cluster":
+        pids = [proc.pid for proc in psutil.process_iter() if "java" in proc.name()]
+        print(f"Found unstopped java processes: {pids}")
+        for pid in pids:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except:
+                logger.warning(f"Exception during killing the java process with pid {pid}", exc_info=True)
+
+
 def main():
+    dataset_name = sys.argv[1]
+
+    print(f"Working with dataset: {dataset_name}")
+
     spark = get_spark_session()
 
-    dataset_name = "company_bankruptcy_dataset"
+    # dataset_name = "company_bankruptcy_dataset"
     # dataset_name = "lama_test_dataset"
     train_df = load_data(
         spark=spark,
@@ -153,6 +175,10 @@ def main():
 
     df = assembler.transform(train_df)
     _ = lgbm.fit(df)
+
+    print("Training is finished")
+    spark.stop()
+    clean_java_processes()
 
 
 if __name__ == "__main__":

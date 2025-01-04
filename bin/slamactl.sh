@@ -188,6 +188,8 @@ function submit_job_k8s() {
 
   filename=$(echo ${script_path} | python -c 'import os; path = input(); print(os.path.splitext(os.path.basename(path))[0]);')
 
+  shift 1
+
   #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
   #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
 
@@ -201,7 +203,7 @@ function submit_job_k8s() {
     --conf 'spark.driver.cores=2' \
     --conf 'spark.driver.memory=32g' \
     --conf 'spark.executor.instances=1' \
-    --conf 'spark.executor.cores=4' \
+    --conf 'spark.executor.cores=1' \
     --conf 'spark.executor.memory=16g' \
     --conf 'spark.cores.max=24' \
     --conf 'spark.memory.fraction=0.05' \
@@ -222,7 +224,7 @@ function submit_job_k8s() {
     --conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*' \
     --jars jars/spark-lightautoml_2.12-0.1.1.jar \
     --py-files "examples/spark/examples_utils.py" \
-    ${script_path}
+    ${script_path} "${@}"
 }
 
 

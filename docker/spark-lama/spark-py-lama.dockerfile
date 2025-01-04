@@ -36,3 +36,5 @@ COPY examples /examples
 ENV PYSPARK_PYTHON=python3
 
 WORKDIR /root
+
+RUN pip install psutil
