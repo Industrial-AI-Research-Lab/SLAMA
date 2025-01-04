@@ -220,7 +220,7 @@ function submit_job_k8s() {
     --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
     --conf 'spark.task.maxFailures=1' \
     --conf 'spark.driver.cores=2' \
-    --conf 'spark.driver.memory=32g' \
+    --conf 'spark.driver.memory=6g' \
     --conf "spark.executor.instances=${SLAMA_EXEC_INSTANCES}" \
     --conf "spark.executor.cores=${SLAMA_EXEC_CORES}" \
     --conf 'spark.executor.memory=16g' \

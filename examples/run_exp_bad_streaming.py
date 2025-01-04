@@ -29,26 +29,38 @@ def clean_pods():
         v1.delete_namespaced_pod(namespace=NAMESPACE, name=driver_pod.metadata.name)
 
 
-def get_exp_record(exp_name: str) -> Dict[str, Any]:
-    v1 = client.CoreV1Api()
-    ret = v1.list_namespaced_pod(namespace=NAMESPACE, label_selector=f'runname={exp_name}')
-    driver_pods = [pod for pod in ret.items if pod.metadata.name.endswith('-driver')]
-    exec_pods = [pod for pod in ret.items if pod.metadata.name.endswith('-exec-1')]
+def get_exp_record(exp_name: str) -> Optional[Dict[str, Any]]:
+    try:
+        v1 = client.CoreV1Api()
+        ret = v1.list_namespaced_pod(namespace=NAMESPACE, label_selector=f'runname={exp_name}')
+        driver_pods = [pod for pod in ret.items if pod.metadata.name.endswith('-driver')]
+        exec_pods = [pod for pod in ret.items if '-exec-' in pod.metadata.name]
 
-    assert len(driver_pods) == 1
-    assert len(exec_pods) == 1
+        assert len(driver_pods) == 1
 
-    driver_pod, exec_pod = driver_pods[0], exec_pods[0]
+        driver_pod = driver_pods[0]
+        driver_log = v1.read_namespaced_pod_log(name=driver_pod.metadata.name, namespace=NAMESPACE)
 
-    driver_log = v1.read_namespaced_pod_log(name=driver_pod.metadata.name, namespace=NAMESPACE)
-    executor_log = v1.read_namespaced_pod_log(name=exec_pod.metadata.name, namespace=NAMESPACE)
-    termination = exec_pod.status.container_statuses[0].state.terminated
-    return {
-        "exp_name": exp_name,
-        "termination": termination.reason if termination else None,
-        "driver_log": driver_log,
-        "executor_log": executor_log
-    }
+        termination = None
+        executor_log = None
+        for exec_pod in exec_pods:
+            termination = exec_pod.status.container_statuses[0].state.terminated
+            if termination:
+                termination = termination.reason
+                executor_log = v1.read_namespaced_pod_log(name=exec_pod.metadata.name, namespace=NAMESPACE)
+
+            if termination == 'Error':
+                break
+
+        return {
+            "exp_name": exp_name,
+            "termination": termination,
+            "driver_log": driver_log,
+            "executor_log": executor_log
+        }
+    except:
+        logger.warning(f"Error during retrieving results for exp {exp_name}", exc_info=True)
+        return None
 
 
 async def run_exp(sem: asyncio.Semaphore,
@@ -117,7 +129,7 @@ def make_configs() -> List[Dict[str, Any]]:
 
 def compile_results(exp_names: List[str]):
     logger.info("Collecting results...")
-    records = [get_exp_record(exp_name) for exp_name in exp_names if exp_name]
+    records = [record for exp_name in exp_names if exp_name and (record := get_exp_record(exp_name))]
 
     logger.info(f"Writing results as a DataFrame in json-format... (records count {len(records)})")
     df = pd.DataFrame(records)
@@ -141,7 +153,7 @@ async def main_run_experiments(max_concurrency: int = 10):
 
     configs = make_configs()
 
-    sem = asyncio.Semaphore(10)
+    sem = asyncio.Semaphore(2)
 
     logger.info(f"Running experiments. Num experiments: {len(configs)}. Max concurrency: {max_concurrency}.")
 
@@ -162,5 +174,5 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s %(threadName)s %(levelname)s %(filename)s:%(lineno)d %(message)s"
     )
-    # main_compile_results()
-    asyncio.run(main_run_experiments())
+    main_compile_results()
+    # asyncio.run(main_run_experiments())
