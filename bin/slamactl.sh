@@ -241,6 +241,7 @@ function submit_job_k8s() {
     --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
     --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
     --conf 'spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir' \
+    --conf 'spark.log.level=DEBUG' \
     --conf 'spark.driver.extraJavaOptions=-Dlog4j.configuration=log4j2.properties' \
     --conf 'spark.executor.extraJavaOptions=-Dlog4j.configuration=log4j2.properties' \
     --conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*' \
