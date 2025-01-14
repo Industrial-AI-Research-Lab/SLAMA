@@ -102,20 +102,20 @@ async def run_exp(sem: asyncio.Semaphore,
 
 def make_configs() -> List[Dict[str, Any]]:
     datasets = [
-        # "lama_test_dataset",
+        "lama_test_dataset",
         "company_bankruptcy_dataset",
-        # "used_cars_dataset",
+        "used_cars_dataset",
         # "adv_used_cars_dataset"
     ]
 
     spark_settings = [
-        # {"exec_instances": 1, "exec_cores": 1},
-        {"exec_instances": 1, "exec_cores": 4},
-        # {"exec_instances": 2, "exec_cores": 1},
+        {"exec_instances": 1, "exec_cores": 1},
+        # {"exec_instances": 1, "exec_cores": 4},
+        {"exec_instances": 2, "exec_cores": 1},
         # {"exec_instances": 2, "exec_cores": 2}
     ]
 
-    spark_settings = spark_settings * 10
+    spark_settings = spark_settings * 5
 
     def _trim_to_size(exp_name: str) -> str:
         return exp_name[:63]
