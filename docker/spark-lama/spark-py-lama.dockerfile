@@ -38,3 +38,5 @@ ENV PYSPARK_PYTHON=python3
 WORKDIR /root
 
 RUN pip install psutil
+
+RUN rm /root/.ivy2/jars/org.slf4j_slf4j-api-1.7.25.jar
