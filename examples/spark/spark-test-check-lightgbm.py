@@ -35,7 +35,8 @@ GENERAL_RUN_PARAMS = {
     'numIterations': 50,
     'earlyStoppingRound': 200,
     'numTasks': None,
-    'numThreads': None,
+    'numThreads': 3,
+    # 'matrixType': 'dense'
     # 'maxStreamingOMPThreads': 1,
 }
 
@@ -117,7 +118,7 @@ def get_spark_session(partitions_num: Optional[int] = None):
 
     spark_sess.sparkContext.setCheckpointDir("/tmp/spark_checkpoints")
 
-    spark_sess.sparkContext.setLogLevel("WARN")
+    # spark_sess.sparkContext.setLogLevel("WARN")
 
     return spark_sess
 
