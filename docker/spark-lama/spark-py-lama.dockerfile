@@ -45,4 +45,4 @@ RUN rm /root/.ivy2/jars/org.slf4j_slf4j-api-1.7.25.jar
 # TODO: adding custom synapseml lightgbm to debug strange behaviour
 RUN rm /root/.ivy2/jars/com.microsoft.azure_synapseml-lightgbm_*.jar
 
-COPY jars/synapseml-lightgbm_2.12-1.0.8-0-d9149d13-20250115-0647-SNAPSHOT.jar /root/.ivy2/jars/
+COPY jars/synapseml-lightgbm_2.12-1.0.8-custom.jar /root/.ivy2/jars/
