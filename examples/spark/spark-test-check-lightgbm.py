@@ -38,6 +38,7 @@ GENERAL_RUN_PARAMS = {
     'numThreads': 3,
     'matrixType': 'dense',
     'maxStreamingOMPThreads': 1,
+    # 'samplingMode': 'global'
 }
 
 
