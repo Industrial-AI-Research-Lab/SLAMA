@@ -142,6 +142,15 @@ def load_test_and_train(
 
     data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
 
+    # small adjustment in values making them non-categorial prevent SIGSEGV from happening
+    # data = data.select(
+    #     *[
+    #         (sf.col(c) + (sf.rand() / sf.lit(10.0)) + sf.lit(0.05)).alias(c)
+    #         for c in data.columns if c not in ['_id', 'price']
+    #     ],
+    #     'price'
+    # )
+
     execs = int(spark.conf.get("spark.executor.instances", "1"))
     cores = int(spark.conf.get("spark.executor.cores", "8"))
 

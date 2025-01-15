@@ -223,7 +223,7 @@ function submit_job_k8s() {
     --conf 'spark.driver.memory=6g' \
     --conf "spark.executor.instances=${SLAMA_EXEC_INSTANCES}" \
     --conf "spark.executor.cores=${SLAMA_EXEC_CORES}" \
-    --conf 'spark.executor.memory=16g' \
+    --conf 'spark.executor.memory=32g' \
     --conf "spark.cores.max=${SLAMA_MAX_CORES}" \
     --conf 'spark.memory.fraction=0.05' \
     --conf 'spark.memory.storageFraction=0.5' \
