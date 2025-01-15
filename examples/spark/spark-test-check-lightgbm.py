@@ -36,8 +36,8 @@ GENERAL_RUN_PARAMS = {
     'earlyStoppingRound': 200,
     'numTasks': None,
     'numThreads': 3,
-    # 'matrixType': 'dense'
-    # 'maxStreamingOMPThreads': 1,
+    'matrixType': 'dense',
+    'maxStreamingOMPThreads': 1,
 }
 
 
