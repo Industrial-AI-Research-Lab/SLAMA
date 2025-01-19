@@ -24,17 +24,17 @@ if __name__ == "__main__":
     seed = 42
     cv = 5
     ml_alg_kwargs = {
-        "auto_unique_co": 10,
+        "auto_unique_co": 1,
         "max_intersection_depth": 3,
         "multiclass_te_co": 3,
-        "output_categories": True,
+        "output_categories": False,
         "top_intersections": 4,
     }
-    # dataset_name = "lama_test_dataset"
+    dataset_name = "lama_test_dataset"
     # dataset_name = "small_used_cars_dataset"
     # dataset_name = "used_cars_dataset"
     # dataset_name = "used_cars_dataset_4x"
-    dataset_name = "used_cars_dataset_10x"
+    # dataset_name = "used_cars_dataset_10x"
     # dataset_name = "company_bankruptcy_dataset"
     # dataset_name = "company_bankruptcy_dataset_100x"
     # dataset_name = "company_bankruptcy_dataset_10000x"
@@ -55,10 +55,15 @@ if __name__ == "__main__":
         task = SparkTask(dataset.task_type)
 
         sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
-        sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)
+        spipe = SparkLGBAdvancedPipeline(**ml_alg_kwargs)
 
-        sdataset = SparkLGBAdvancedPipeline(**ml_alg_kwargs).fit_transform(sdataset)
-        sdataset.save(f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/adv_{dataset_name}.slama", save_mode="overwrite")
+        sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)
+        sdataset = spipe.fit_transform(sdataset)
+        sdataset.save(
+            f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/adv_{dataset_name}.slama",
+            save_mode="overwrite",
+            num_partitions=1
+        )
 
         # # How to load
         # sdataset = SparkDataset.load(
