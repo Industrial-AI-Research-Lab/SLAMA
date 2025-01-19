@@ -34,14 +34,15 @@ def main_convert_to_csv():
     persistence_manager = PlainCachePersistenceManager()
 
     datasets = [
-        "used_cars_dataset",
-        "lama_test_dataset",
-        "company_bankruptcy_dataset",
-        "adv_used_cars_dataset"
+        # "used_cars_dataset",
+        # "lama_test_dataset",
+        # "company_bankruptcy_dataset",
+        # "adv_used_cars_dataset",
+        "adv_small_used_cars_dataset"
     ]
 
     for dataset_name in tqdm(datasets, desc="Processing datasets"):
-        load_dataset_path = f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}_1part.slama"
+        load_dataset_path = f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama"
         save_dataset_path = f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/CSV/{dataset_name}.csv"
 
         with log_exec_time():

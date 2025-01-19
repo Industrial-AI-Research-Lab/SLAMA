@@ -30,8 +30,8 @@ if __name__ == "__main__":
         "output_categories": False,
         "top_intersections": 4,
     }
-    dataset_name = "lama_test_dataset"
-    # dataset_name = "small_used_cars_dataset"
+    # dataset_name = "lama_test_dataset"
+    dataset_name = "small_used_cars_dataset"
     # dataset_name = "used_cars_dataset"
     # dataset_name = "used_cars_dataset_4x"
     # dataset_name = "used_cars_dataset_10x"

@@ -71,6 +71,13 @@ def get_lightgbm_params(dataset_name: str) -> Dict[str, Any]:
                 'metric': 'rmse',
                 'predictionCol': 'prediction'
             }
+        case "adv_small_used_cars_dataset":
+            dataset_specific_params = {
+                'labelCol': "price",
+                'objective': 'regression',
+                'metric': 'rmse',
+                'predictionCol': 'prediction'
+            }
         case "adv_used_cars_dataset":
             dataset_specific_params = {
                 'labelCol': "price",
@@ -142,6 +149,32 @@ def load_test_and_train(
     assert 0 <= test_size <= 1
 
     data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
+
+    if "adv_small_used_cars_dataset" in data_path:
+        data = data.select(
+            *[
+                c for c in data.columns if c not in [
+                    '_id', 'price',
+                    'engine_displacement',
+                    'highway_fuel_economy',
+                    'mileage',
+                    'longitude',
+                    'listing_id',
+                    'ord__bed_height',
+                    'ord__is_oemcpo',
+                    'daysonmarket',
+                    'ord__is_cpo',
+                    'owner_count',
+                    'horsepower',
+                    'savings_amount',
+                    'seller_rating',
+                    'city_fuel_economy',
+                    'latitude'
+                ]
+            ],
+            'price'
+        )
+        print("Removing bug-related columns from small_used_cars")
 
     # small adjustment in values making them non-categorial prevent SIGSEGV from happening
     # data = data.select(
