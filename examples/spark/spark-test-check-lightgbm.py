@@ -158,7 +158,7 @@ def load_test_and_train(
                     'engine_displacement',
                     'highway_fuel_economy',
                     'mileage',
-                    'longitude',
+                    # 'longitude',
                     'listing_id',
                     'ord__bed_height',
                     'ord__is_oemcpo',
@@ -167,9 +167,9 @@ def load_test_and_train(
                     'owner_count',
                     'horsepower',
                     'savings_amount',
-                    'seller_rating',
+                    # 'seller_rating',
                     'city_fuel_economy',
-                    'latitude'
+                    # 'latitude'
                 ]
             ],
             'price'
