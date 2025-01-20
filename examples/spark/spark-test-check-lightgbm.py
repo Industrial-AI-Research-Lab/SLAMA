@@ -169,7 +169,10 @@ def load_test_and_train(
 ) -> Tuple[DataFrame, DataFrame]:
     assert 0 <= test_size <= 1
 
-    data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
+    if data_path.endswith('.csv'):
+        data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
+    else:
+        data = spark.read.parquet(data_path)
 
     # if "adv_small_used_cars_dataset" in data_path:
     #     data = data.select(
