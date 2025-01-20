@@ -83,7 +83,7 @@ def get_lightgbm_params(dataset_name: str) -> Tuple[str, Dict[str, Any]]:
                 'predictionCol': 'prediction'
             }
         case "used_cars_dataset_10x":
-            data_path = "/opt/preprocessed_datasets/used_cars_dataset_10x.slama/data.parquet"
+            data_path = "hdfs://node21.bdcl:9000/opt/preprocessed_datasets/used_cars_dataset_10x.slama/data.parquet"
             dataset_specific_params = {
                 'labelCol': "price",
                 'objective': 'regression',
