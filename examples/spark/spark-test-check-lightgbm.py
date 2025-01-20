@@ -39,9 +39,10 @@ GENERAL_RUN_PARAMS = {
     'maxStreamingOMPThreads': 1,
 
     'dataTransferMode': 'bulk',
+    'numTasks': 6,
 
     # 'dataTransferMode': 'streaming',
-    # 'numTasks': 1
+    # 'numTasks': 6
 }
 
 
@@ -249,7 +250,7 @@ def main():
     print(f"ASSEMBLED DATASET SIZE: {train_df.count()}")
 
     features = [c for c in train_df.columns if c not in [run_params['labelCol'], '_id', 'reader_fold_num', 'is_val']]
-    assembler = VectorAssembler(inputCols=features, outputCol=run_params['featuresCol'], handleInvalid="error")
+    assembler = VectorAssembler(inputCols=features, outputCol=run_params['featuresCol'], handleInvalid="keep")
 
     match run_params['objective']:
         case 'regression':
