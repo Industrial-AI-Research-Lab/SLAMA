@@ -4,6 +4,7 @@ set -ex
 
 export SPARK_VERSION=3.5.3
 export HADOOP_VERSION=3
+REPORT_TO_INFLUX=${REPORT_TO_INFLUX:false}
 SYNAPSEML_VERSION=1.0.8
 SLAMA_VERSION=0.4.1
 LIGHTGBM_VERSION=3.3.5
@@ -194,7 +195,7 @@ function submit_job_k8s() {
 
   #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
   #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
-    local TIMESTAMP=$(date +%y%m%d_%H%M)
+  local TIMESTAMP=$(date +%y%m%d_%H%M)
 
   # Format the memory storage fraction (remove dot and pad with zeros)
   local MSF=$(echo ${SPARK_MEMORY_STORAGE_FRACTION} | sed 's/0\.//' | awk '{printf "%03d", $1}')
@@ -216,48 +217,68 @@ function submit_job_k8s() {
     local CONFIG_SUFFIX="${FULL_SUFFIX}"
   fi
 
+  if [[ "${REPORT_TO_INFLUX}" = true ]]; then
+    extra_java_options="
+      -Dlog4j.configuration=log4j2.properties
+      -Dlog4j.logger.com.uber.profiling=DEBUG
+      -javaagent:\"/root/jars/jvm-profiler-1.0.0.jar=
+        reporter=com.uber.profiling.reporters.InfluxDBOutputReporter,
+        metricInterval=2500,
+        sampleInterval=2500,
+        ioProfiling=false,
+        influxdb.host=${INFLUXDB_HOST},
+        influxdb.port=${INFLUXDB_PORT},
+        influxdb.database=${INFLUXDB_DATABASE},
+        influxdb.username=${INFLUXDB_USERNAME},
+        influxdb.password=${INFLUXDB_PASSWORD},
+        metaId.override=${CONFIG_SUFFIX}\"
+    "
+    jars="jars/spark-lightautoml_2.12-0.1.1.jar,jars/jvm-profiler-1.0.0.jar"
+  else
+    extra_java_options="-Dlog4j.configuration=log4j2.properties"
+    jars="jars/spark-lightautoml_2.12-0.1.1.jar"
+  fi
+
+  extra_java_options=$(echo "${extra_java_options}" | sed '1d;$d;s/^    //g')
+
   spark-submit \
     --master k8s://${APISERVER} \
     --deploy-mode cluster \
-    --conf 'spark.kryoserializer.buffer.max=512m' \
-    --conf 'spark.scheduler.minRegisteredResourcesRatio=1.0' \
-    --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
-    --conf 'spark.task.maxFailures=1' \
-    --conf "spark.driver.cores=${SPARK_DRIVER_CORES}" \
-    --conf "spark.driver.memory=${SPARK_DRIVER_MEMORY}" \
-    --conf "spark.executor.instances=${SPARK_EXECUTOR_INSTANCES}" \
-    --conf "spark.executor.cores=${SPARK_EXECUTOR_CORES}" \
-    --conf "spark.executor.memory=${SPARK_EXECUTOR_MEMORY}" \
-    --conf 'spark.cores.max=4' \
-    --conf 'spark.memory.fraction=0.6' \
-    --conf "spark.memory.storageFraction=${SPARK_MEMORY_STORAGE_FRACTION}" \
-    --conf 'spark.sql.autoBroadcastJoinThreshold=100MB' \
-    --conf 'spark.sql.execution.arrow.pyspark.enabled=true' \
+    --conf "spark.kryoserializer.buffer.max=512m" \
+    --conf "spark.scheduler.minRegisteredResourcesRatio=1.0" \
+    --conf "spark.scheduler.maxRegisteredResourcesWaitingTime=180s" \
+    --conf "spark.task.maxFailures=1" \
+    --conf "spark.driver.cores=${SPARK_DRIVER_CORES:2}" \
+    --conf "spark.driver.memory=${SPARK_DRIVER_MEMORY:8g}" \
+    --conf "spark.executor.instances=${SPARK_EXECUTOR_INSTANCES:1}" \
+    --conf "spark.executor.cores=${SPARK_EXECUTOR_CORES:4}" \
+    --conf "spark.executor.memory=${SPARK_EXECUTOR_MEMORY:16g}" \
+    --conf "spark.cores.max=${SPARK_CORES_MAX:4}" \
+    --conf "spark.memory.fraction=${SPARK_MEMORY_FRACTION:0.6}" \
+    --conf "spark.memory.storageFraction=${SPARK_MEMORY_STORAGE_FRACTION:0.05}" \
+    --conf "spark.sql.autoBroadcastJoinThreshold=100MB" \
+    --conf "spark.sql.execution.arrow.pyspark.enabled=true" \
     --conf "spark.kubernetes.container.image=${IMAGE}" \
-    --conf 'spark.kubernetes.namespace='${KUBE_NAMESPACE} \
-    --conf 'spark.kubernetes.authenticate.driver.serviceAccountName=spark' \
-    --conf "spark.kubernetes.memoryOverheadFactor=${SPARK_MEMORY_OVERHEAD_FACTOR}" \
+    --conf "spark.kubernetes.namespace=${KUBE_NAMESPACE}" \
+    --conf "spark.kubernetes.authenticate.driver.serviceAccountName=spark" \
+    --conf "spark.kubernetes.memoryOverheadFactor=${SPARK_MEMORY_OVERHEAD_FACTOR:0.04}" \
     --conf "spark.kubernetes.driver.label.appname=${CONFIG_SUFFIX}" \
     --conf "spark.kubernetes.executor.label.appname=${CONFIG_SUFFIX}" \
-    --conf 'spark.kubernetes.executor.deleteOnTermination=false' \
-    --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
-    --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
-    --conf 'spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir' \
-    --conf 'spark.log.level=DEBUG' \
-    --conf 'spark.driver.extraJavaOptions=-Dlog4j.configuration=log4j2.properties' \
-    --conf 'spark.executor.extraJavaOptions=-Dlog4j.configuration=log4j2.properties' \
+    --conf "spark.kubernetes.executor.deleteOnTermination=false" \
+    --conf "spark.kubernetes.container.image.pullPolicy=Always" \
+    --conf "spark.kubernetes.driverEnv.SCRIPT_ENV=cluster" \
+    --conf "spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir" \
+    --conf "spark.log.level=DEBUG" \
     --conf "spark.app.name=${CONFIG_SUFFIX}" \
-    --conf "spark.driver.extraJavaOptions=-Dlog4j.logger.com.uber.profiling=DEBUG -javaagent:\"/root/jars/jvm-profiler-1.0.0.jar=reporter=com.uber.profiling.reporters.InfluxDBOutputReporter,metricInterval=2500,sampleInterval=2500,ioProfiling=false,influxdb.host=${INFLUXDB_HOST},influxdb.port=${INFLUXDB_PORT},influxdb.database=${INFLUXDB_DATABASE},influxdb.username=${INFLUXDB_USERNAME},influxdb.password=${INFLUXDB_PASSWORD},metaId.override=${CONFIG_SUFFIX}\"" \
-    --conf "spark.executor.extraJavaOptions=-Dlog4j.logger.com.uber.profiling=DEBUG -javaagent:\"/root/jars/jvm-profiler-1.0.0.jar=reporter=com.uber.profiling.reporters.InfluxDBOutputReporter,metricInterval=2500,sampleInterval=2500,ioProfiling=false,influxdb.host=${INFLUXDB_HOST},influxdb.port=${INFLUXDB_PORT},influxdb.database=${INFLUXDB_DATABASE},influxdb.username=${INFLUXDB_USERNAME},influxdb.password=${INFLUXDB_PASSWORD},metaId.override=${CONFIG_SUFFIX}\"" \
-    --conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*' \
-    --conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*' \
-    --jars jars/spark-lightautoml_2.12-0.1.1.jar,jars/jvm-profiler-1.0.0.jar \
+    --conf "spark.driver.extraJavaOptions=${extra_java_options}" \
+    --conf "spark.executor.extraJavaOptions=${extra_java_options}" \
+    --conf "spark.driver.extraClassPath=/root/.ivy2/jars/*" \
+    --conf "spark.executor.extraClassPath=/root/.ivy2/jars/*" \
+    --jars "${jars}" \
     --files "examples/spark/log4j2.properties" \
     --py-files "examples/spark/examples_utils.py" \
     ${script_path} "${@}"
 }
-
-
 
 
 function port_forward() {
