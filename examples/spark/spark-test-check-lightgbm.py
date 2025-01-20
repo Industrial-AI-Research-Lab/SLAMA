@@ -34,14 +34,14 @@ GENERAL_RUN_PARAMS = {
     'numIterations': 50,
     'earlyStoppingRound': 200,
     # 'numTasks': None,
-    'numThreads': 3,
-    'matrixType': 'auto',
+    # 'numThreads': 3,
+    'matrixType': 'dense',
     'maxStreamingOMPThreads': 1,
 
-    'dataTransferMode': 'bulk',
-    'numTasks': 6,
+    # 'dataTransferMode': 'bulk',
+    # 'numTasks': 6,
 
-    # 'dataTransferMode': 'streaming',
+    'dataTransferMode': 'streaming',
     # 'numTasks': 6
 }
 
@@ -205,13 +205,14 @@ def load_test_and_train(
     #     print("Removing bug-related columns from small_used_cars")
 
     # small adjustment in values making them non-categorial prevent SIGSEGV from happening
-    # data = data.select(
-    #     *[
-    #         (sf.col(c) + (sf.rand() / sf.lit(10.0)) + sf.lit(0.05)).alias(c)
-    #         for c in data.columns if c not in ['_id', 'price']
-    #     ],
-    #     'price'
-    # )
+    data = data.na.fill(0.0453)
+    data = data.select(
+        *[
+            (sf.col(c) + (sf.rand() / sf.lit(10.0)) + sf.lit(0.05)).alias(c)
+            for c in data.columns if c not in ['_id', 'price']
+        ],
+        'price'
+    )
 
     execs = int(spark.conf.get("spark.executor.instances", "1"))
     cores = int(spark.conf.get("spark.executor.cores", "8"))
@@ -268,6 +269,8 @@ def main():
     predicts_df = model.transform(df)
     predicts_df.write.mode("overwrite").format("noop").save()
     print("Predicting is finished")
+
+    # time.sleep(600)
 
     spark.stop()
     clean_java_processes()
