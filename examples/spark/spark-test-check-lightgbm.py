@@ -154,22 +154,25 @@ def load_test_and_train(
     # if "adv_small_used_cars_dataset" in data_path:
     #     data = data.select(
     #         *[
-    #             c for c in data.columns if c not in [
-    #                 '_id', 'price',
-    #                 'engine_displacement',
-    #                 'highway_fuel_economy',
-    #                 'mileage',
-    #                 # 'longitude',
-    #                 'listing_id',
+    #             c for c in data.columns if c in [
+    #                 # 'engine_displacement',
+    #                 # 'highway_fuel_economy',
+    #                 # 'mileage',
+    #                 # 'listing_id',
+    #
     #                 'ord__bed_height',
     #                 'ord__is_oemcpo',
-    #                 'daysonmarket',
     #                 'ord__is_cpo',
-    #                 'owner_count',
-    #                 'horsepower',
-    #                 'savings_amount',
+    #
+    #                 # 'daysonmarket',
+    #                 # 'owner_count',
+    #                 # 'horsepower',
+    #                 # 'savings_amount',
+    #                 # 'city_fuel_economy',
+    #
+    #                 # '_id', 'price',
+    #                 # 'longitude',
     #                 # 'seller_rating',
-    #                 'city_fuel_economy',
     #                 # 'latitude'
     #             ]
     #         ],
