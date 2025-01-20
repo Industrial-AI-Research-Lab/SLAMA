@@ -1,6 +1,6 @@
 import logging.config
 from pprint import pprint
-
+import os
 from examples_utils import get_dataset
 from examples_utils import get_persistence_manager
 from examples_utils import get_spark_session
@@ -35,9 +35,7 @@ if __name__ == "__main__":
 
     seed = 42
     cv = 5
-    # dataset_name = "lama_test_dataset"
-    # dataset_name = "company_bankruptcy_dataset"
-    dataset_name = "company_bankruptcy_dataset_100x"
+    dataset_name = os.getenv('DATASET_NAME', 'company_bankruptcy_dataset_100x')
     # dataset_name = "used_cars_dataset"
     dataset = get_dataset(dataset_name)
 

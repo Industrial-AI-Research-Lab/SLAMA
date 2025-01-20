@@ -1,4 +1,5 @@
 import logging.config
+import os
 
 from examples_utils import get_dataset, load_data
 from examples_utils import get_spark_session
@@ -28,9 +29,7 @@ if __name__ == "__main__":
 
     seed = 42
     cv = 5
-    # dataset_name = "lama_test_dataset"
-    # dataset_name = "small_used_cars_dataset_preproc"
-    dataset_name = "used_cars_dataset_100x_preproc"
+    dataset_name = os.getenv('DATASET_NAME', 'lama_test_dataset')
     dataset = get_dataset(dataset_name)
 
     ml_alg_kwargs = {
@@ -49,7 +48,7 @@ if __name__ == "__main__":
         sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
         spark_ml_algo = SparkBoostLGBM(
             default_params={
-                "numIterations": 10,
+                "numIterations": 50,
             },
             freeze_defaults=True,
             execution_mode="bulk"
@@ -66,7 +65,7 @@ if __name__ == "__main__":
 
         sdataset = sreader.fit_read(data, roles=dataset.roles, persistence_manager=persistence_manager)
 
-        iterator = SparkFoldsIterator(sdataset, n_folds=cv).convert_to_holdout_iterator()
+        iterator = SparkFoldsIterator(sdataset, n_folds=cv)
 
         oof_preds_ds = ml_pipe.fit_predict(iterator).persist()
         oof_score = score(oof_preds_ds[:, spark_ml_algo.prediction_feature])

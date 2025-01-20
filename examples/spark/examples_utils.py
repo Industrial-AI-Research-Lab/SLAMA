@@ -145,8 +145,8 @@ def prepare_test_and_train(
 
     spark = get_current_session()
 
-    execs = int(spark.conf.get("spark.executor.instances", "1"))
-    cores = int(spark.conf.get("spark.executor.cores", "8"))
+    execs = int(os.getenv('SPARK_EXECUTOR_INSTANCES', spark.conf.get("spark.executor.instances", "1")))
+    cores = int(os.getenv('SPARK_EXECUTOR_CORES', spark.conf.get("spark.executor.cores", "8")))
 
     data = dataset.load()
 
@@ -167,8 +167,8 @@ def prepare_test_and_train(
 def load_data(dataset: Dataset, partitions_coefficient: int = 1) -> SparkDataFrame:
     spark = get_current_session()
 
-    execs = int(spark.conf.get("spark.executor.instances", "1"))
-    cores = int(spark.conf.get("spark.executor.cores", "8"))
+    execs = int(os.getenv('SPARK_EXECUTOR_INSTANCES', spark.conf.get("spark.executor.instances", "1")))
+    cores = int(os.getenv('SPARK_EXECUTOR_CORES', spark.conf.get("spark.executor.cores", "8")))
 
     data = dataset.load()
 

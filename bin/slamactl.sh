@@ -66,13 +66,13 @@ function build_pyspark_images() {
 
   if [[ ! -z "${REPO}" ]]
   then
-    ./spark/bin/docker-image-tool.sh -r ${REPO} -t ${BASE_IMAGE_TAG} \
+    DOCKER_DEFAULT_PLATFORM=linux/amd64 ./spark/bin/docker-image-tool.sh -r ${REPO} -t ${BASE_IMAGE_TAG} \
       -p spark/kubernetes/dockerfiles/spark/bindings/python/Dockerfile \
       build
 
 #    ./spark/bin/docker-image-tool.sh -r ${REPO} -t ${BASE_IMAGE_TAG} push
   else
-      ./spark/bin/docker-image-tool.sh -t ${BASE_IMAGE_TAG} \
+      DOCKER_DEFAULT_PLATFORM=linux/amd64 ./spark/bin/docker-image-tool.sh -t ${BASE_IMAGE_TAG} \
       -p spark/kubernetes/dockerfiles/spark/bindings/python/Dockerfile \
       build
   fi
@@ -89,7 +89,7 @@ function build_lama_image() {
   poetry export -f requirements.txt > requirements.txt
   poetry build
 
-  docker build \
+  DOCKER_DEFAULT_PLATFORM=linux/amd64  docker build \
     --build-arg base_image=${BASE_SPARK_IMAGE} \
     --build-arg SPARK_VER=${SPARK_VERSION} \
     --build-arg SYNAPSEML_VER=${SYNAPSEML_VERSION} \
@@ -182,6 +182,8 @@ function submit_job() {
 }
 
 function submit_job_k8s() {
+  load_env
+
   APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
 
   script_path=$1
@@ -192,24 +194,26 @@ function submit_job_k8s() {
 
   #--conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
   #--conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*:/root/jars/*' \
-  if [[ -z "${SLAMA_EXEC_INSTANCES}" ]]
-  then
-    SLAMA_EXEC_INSTANCES=1
-  fi
+    local TIMESTAMP=$(date +%y%m%d_%H%M)
 
-  if [[ -z "${SLAMA_EXEC_CORES}" ]]
-  then
-    SLAMA_EXEC_CORES=4
-  fi
+  # Format the memory storage fraction (remove dot and pad with zeros)
+  local MSF=$(echo ${SPARK_MEMORY_STORAGE_FRACTION} | sed 's/0\.//' | awk '{printf "%03d", $1}')
 
-  if [[ -z "${SLAMA_MAX_CORES}" ]]
-  then
-    SLAMA_MAX_CORES=4
-  fi
+  # Format memory overhead factor to show as X_Y (e.g., 3.81 -> 3_8)
+  local MOF=$(echo ${SPARK_MEMORY_OVERHEAD_FACTOR} | awk -F '.' '{printf "%d_%d", $1, substr($2, 1, 1)}')
 
-  if [[ -z "${SLAMA_RUN_NAME}" ]]
-  then
-    SLAMA_RUN_NAME="default"
+  # Remove 'g' from executor memory
+  local MEM=$(echo ${SPARK_EXECUTOR_MEMORY} | sed 's/g$//')
+
+  # Create full and short versions of CONFIG_SUFFIX
+  local FULL_SUFFIX="${PIPELINE_NAME_SHORT}_${DATASET_NAME_SHORT}_${TIMESTAMP}_e${SPARK_EXECUTOR_INSTANCES}i${MSF}msf${MEM}g${MOF}f"
+  local SHORT_SUFFIX="${PIPELINE_NAME_SHORT}_${DATASET_NAME_SHORT}_${TIMESTAMP}"
+
+  # Use short version if full version is too long, this is a system limitation
+  if [ ${#FULL_SUFFIX} -ge 63 ]; then
+    local CONFIG_SUFFIX="${SHORT_SUFFIX}"
+  else
+    local CONFIG_SUFFIX="${FULL_SUFFIX}"
   fi
 
   spark-submit \
@@ -219,24 +223,22 @@ function submit_job_k8s() {
     --conf 'spark.scheduler.minRegisteredResourcesRatio=1.0' \
     --conf 'spark.scheduler.maxRegisteredResourcesWaitingTime=180s' \
     --conf 'spark.task.maxFailures=1' \
-    --conf 'spark.driver.cores=2' \
-    --conf 'spark.driver.memory=6g' \
-    --conf "spark.executor.instances=${SLAMA_EXEC_INSTANCES}" \
-    --conf "spark.executor.cores=${SLAMA_EXEC_CORES}" \
-    --conf 'spark.executor.memory=32g' \
-    --conf "spark.cores.max=${SLAMA_MAX_CORES}" \
-    --conf 'spark.memory.fraction=0.05' \
-    --conf 'spark.memory.storageFraction=0.5' \
-    --conf 'spark.kubernetes.memoryOverheadFactor=0.5' \
+    --conf "spark.driver.cores=${SPARK_DRIVER_CORES}" \
+    --conf "spark.driver.memory=${SPARK_DRIVER_MEMORY}" \
+    --conf "spark.executor.instances=${SPARK_EXECUTOR_INSTANCES}" \
+    --conf "spark.executor.cores=${SPARK_EXECUTOR_CORES}" \
+    --conf "spark.executor.memory=${SPARK_EXECUTOR_MEMORY}" \
+    --conf 'spark.cores.max=4' \
+    --conf 'spark.memory.fraction=0.6' \
+    --conf "spark.memory.storageFraction=${SPARK_MEMORY_STORAGE_FRACTION}" \
     --conf 'spark.sql.autoBroadcastJoinThreshold=100MB' \
     --conf 'spark.sql.execution.arrow.pyspark.enabled=true' \
     --conf "spark.kubernetes.container.image=${IMAGE}" \
     --conf 'spark.kubernetes.namespace='${KUBE_NAMESPACE} \
     --conf 'spark.kubernetes.authenticate.driver.serviceAccountName=spark' \
-    --conf "spark.kubernetes.driver.label.appname=${filename}" \
-    --conf "spark.kubernetes.driver.label.runname=${SLAMA_RUN_NAME}" \
-    --conf "spark.kubernetes.executor.label.appname=${filename}" \
-    --conf "spark.kubernetes.executor.label.runname=${SLAMA_RUN_NAME}" \
+    --conf "spark.kubernetes.memoryOverheadFactor=${SPARK_MEMORY_OVERHEAD_FACTOR}" \
+    --conf "spark.kubernetes.driver.label.appname=${CONFIG_SUFFIX}" \
+    --conf "spark.kubernetes.executor.label.appname=${CONFIG_SUFFIX}" \
     --conf 'spark.kubernetes.executor.deleteOnTermination=false' \
     --conf 'spark.kubernetes.container.image.pullPolicy=Always' \
     --conf 'spark.kubernetes.driverEnv.SCRIPT_ENV=cluster' \
@@ -244,13 +246,17 @@ function submit_job_k8s() {
     --conf 'spark.log.level=DEBUG' \
     --conf 'spark.driver.extraJavaOptions=-Dlog4j.configuration=log4j2.properties' \
     --conf 'spark.executor.extraJavaOptions=-Dlog4j.configuration=log4j2.properties' \
+    --conf "spark.app.name=${CONFIG_SUFFIX}" \
+    --conf "spark.driver.extraJavaOptions=-Dlog4j.logger.com.uber.profiling=DEBUG -javaagent:\"/root/jars/jvm-profiler-1.0.0.jar=reporter=com.uber.profiling.reporters.InfluxDBOutputReporter,metricInterval=2500,sampleInterval=2500,ioProfiling=false,influxdb.host=${INFLUXDB_HOST},influxdb.port=${INFLUXDB_PORT},influxdb.database=${INFLUXDB_DATABASE},influxdb.username=${INFLUXDB_USERNAME},influxdb.password=${INFLUXDB_PASSWORD},metaId.override=${CONFIG_SUFFIX}\"" \
+    --conf "spark.executor.extraJavaOptions=-Dlog4j.logger.com.uber.profiling=DEBUG -javaagent:\"/root/jars/jvm-profiler-1.0.0.jar=reporter=com.uber.profiling.reporters.InfluxDBOutputReporter,metricInterval=2500,sampleInterval=2500,ioProfiling=false,influxdb.host=${INFLUXDB_HOST},influxdb.port=${INFLUXDB_PORT},influxdb.database=${INFLUXDB_DATABASE},influxdb.username=${INFLUXDB_USERNAME},influxdb.password=${INFLUXDB_PASSWORD},metaId.override=${CONFIG_SUFFIX}\"" \
     --conf 'spark.driver.extraClassPath=/root/.ivy2/jars/*' \
     --conf 'spark.executor.extraClassPath=/root/.ivy2/jars/*' \
-    --jars jars/spark-lightautoml_2.12-0.1.1.jar \
+    --jars jars/spark-lightautoml_2.12-0.1.1.jar,jars/jvm-profiler-1.0.0.jar \
     --files "examples/spark/log4j2.properties" \
     --py-files "examples/spark/examples_utils.py" \
     ${script_path} "${@}"
 }
+
 
 
 
@@ -457,6 +463,21 @@ function main () {
         ;;
 
     esac
+}
+
+load_env() {
+  if [ -f ".env" ]; then
+    set -a
+    source ".env"
+    set +a
+  elif [ -f "../.env" ]; then
+    set -a
+    source "../.env"
+    set +a
+  else
+    echo "Warning: .env file not found in current directory or project root directory"
+    exit 1
+  fi
 }
 
 main "${@}"
