@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 export SPARK_VERSION=3.5.3
 export HADOOP_VERSION=3
-REPORT_TO_INFLUX=${REPORT_TO_INFLUX:false}
+REPORT_TO_INFLUX=${REPORT_TO_INFLUX:-false}
 SYNAPSEML_VERSION=1.0.8
 SLAMA_VERSION=0.4.1
 LIGHTGBM_VERSION=3.3.5
-BASE_IMAGE_TAG="slama-${SYNAPSEML_VERSION}-spark${SPARK_VERSION}-new"
+BASE_IMAGE_TAG="slama-${SYNAPSEML_VERSION}-spark${SPARK_VERSION}"
 
 if [[ -z "${KUBE_NAMESPACE}" ]]
 then
@@ -219,8 +219,6 @@ function submit_job_k8s() {
 
   if [[ "${REPORT_TO_INFLUX}" = true ]]; then
     extra_java_options="
-      -Dlog4j.configuration=log4j2.properties
-      -Dlog4j.logger.com.uber.profiling=DEBUG
       -javaagent:\"/root/jars/jvm-profiler-1.0.0.jar=
         reporter=com.uber.profiling.reporters.InfluxDBOutputReporter,
         metricInterval=2500,
@@ -233,13 +231,14 @@ function submit_job_k8s() {
         influxdb.password=${INFLUXDB_PASSWORD},
         metaId.override=${CONFIG_SUFFIX}\"
     "
+    extra_java_options=$(echo "${extra_java_options}" | tr -d '\n' | tr -d ' ')
+    extra_java_options="-Dlog4j.logger.com.uber.profiling=DEBUG ${extra_java_options}"
     jars="jars/spark-lightautoml_2.12-0.1.1.jar,jars/jvm-profiler-1.0.0.jar"
   else
-    extra_java_options="-Dlog4j.configuration=log4j2.properties"
     jars="jars/spark-lightautoml_2.12-0.1.1.jar"
   fi
 
-  extra_java_options=$(echo "${extra_java_options}" | sed '1d;$d;s/^    //g')
+  extra_java_options="-Dlog4j.configuration=log4j2.properties ${extra_java_options}"
 
   spark-submit \
     --master k8s://${APISERVER} \
@@ -248,20 +247,20 @@ function submit_job_k8s() {
     --conf "spark.scheduler.minRegisteredResourcesRatio=1.0" \
     --conf "spark.scheduler.maxRegisteredResourcesWaitingTime=180s" \
     --conf "spark.task.maxFailures=1" \
-    --conf "spark.driver.cores=${SPARK_DRIVER_CORES:2}" \
-    --conf "spark.driver.memory=${SPARK_DRIVER_MEMORY:8g}" \
-    --conf "spark.executor.instances=${SPARK_EXECUTOR_INSTANCES:1}" \
-    --conf "spark.executor.cores=${SPARK_EXECUTOR_CORES:4}" \
-    --conf "spark.executor.memory=${SPARK_EXECUTOR_MEMORY:16g}" \
-    --conf "spark.cores.max=${SPARK_CORES_MAX:4}" \
-    --conf "spark.memory.fraction=${SPARK_MEMORY_FRACTION:0.6}" \
-    --conf "spark.memory.storageFraction=${SPARK_MEMORY_STORAGE_FRACTION:0.05}" \
+    --conf "spark.driver.cores=${SPARK_DRIVER_CORES:-2}" \
+    --conf "spark.driver.memory=${SPARK_DRIVER_MEMORY:-8g}" \
+    --conf "spark.executor.instances=${SPARK_EXECUTOR_INSTANCES:-1}" \
+    --conf "spark.executor.cores=${SPARK_EXECUTOR_CORES:-4}" \
+    --conf "spark.executor.memory=${SPARK_EXECUTOR_MEMORY:-16g}" \
+    --conf "spark.cores.max=${SPARK_CORES_MAX:-4}" \
+    --conf "spark.memory.fraction=${SPARK_MEMORY_FRACTION:-0.6}" \
+    --conf "spark.memory.storageFraction=${SPARK_MEMORY_STORAGE_FRACTION:-0.6}" \
     --conf "spark.sql.autoBroadcastJoinThreshold=100MB" \
     --conf "spark.sql.execution.arrow.pyspark.enabled=true" \
     --conf "spark.kubernetes.container.image=${IMAGE}" \
     --conf "spark.kubernetes.namespace=${KUBE_NAMESPACE}" \
     --conf "spark.kubernetes.authenticate.driver.serviceAccountName=spark" \
-    --conf "spark.kubernetes.memoryOverheadFactor=${SPARK_MEMORY_OVERHEAD_FACTOR:0.04}" \
+    --conf "spark.kubernetes.memoryOverheadFactor=${SPARK_MEMORY_OVERHEAD_FACTOR:-0.4}" \
     --conf "spark.kubernetes.driver.label.appname=${CONFIG_SUFFIX}" \
     --conf "spark.kubernetes.executor.label.appname=${CONFIG_SUFFIX}" \
     --conf "spark.kubernetes.executor.deleteOnTermination=false" \
