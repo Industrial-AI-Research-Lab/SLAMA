@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 GENERAL_RUN_PARAMS = {
     'featuresCol': 'Mod_0_LightGBM_vassembler_features',
     'verbosity': 1,
-    'dataTransferMode': 'streaming',
     'useSingleDatasetMode': True,
     'useBarrierExecutionMode': False,
     'isProvideTrainingMetric': True,
@@ -36,14 +35,18 @@ GENERAL_RUN_PARAMS = {
     'earlyStoppingRound': 200,
     # 'numTasks': None,
     'numThreads': 3,
-    'matrixType': 'dense',
+    'matrixType': 'auto',
     'maxStreamingOMPThreads': 1,
-    'numTasks': 1
-    # 'samplingMode': 'global'
+
+    'dataTransferMode': 'bulk',
+
+    # 'dataTransferMode': 'streaming',
+    # 'numTasks': 1
 }
 
 
-def get_lightgbm_params(dataset_name: str) -> Dict[str, Any]:
+def get_lightgbm_params(dataset_name: str) -> Tuple[str, Dict[str, Any]]:
+    data_path = None
     match dataset_name:
         case "company_bankruptcy_dataset":
             dataset_specific_params = {
@@ -72,6 +75,21 @@ def get_lightgbm_params(dataset_name: str) -> Dict[str, Any]:
                 'metric': 'rmse',
                 'predictionCol': 'prediction'
             }
+        case "used_cars_dataset":
+            dataset_specific_params = {
+                'labelCol': "price",
+                'objective': 'regression',
+                'metric': 'rmse',
+                'predictionCol': 'prediction'
+            }
+        case "used_cars_dataset_10x":
+            data_path = "/opt/preprocessed_datasets/used_cars_dataset_10x.slama/data.parquet"
+            dataset_specific_params = {
+                'labelCol': "price",
+                'objective': 'regression',
+                'metric': 'rmse',
+                'predictionCol': 'prediction'
+            }
         case "adv_small_used_cars_dataset":
             dataset_specific_params = {
                 'labelCol': "price",
@@ -89,7 +107,9 @@ def get_lightgbm_params(dataset_name: str) -> Dict[str, Any]:
         case _:
             raise ValueError("Unknown dataset")
 
-    return {
+    data_path = data_path or f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/CSV/{dataset_name}.csv"
+
+    return data_path, {
         **GENERAL_RUN_PARAMS,
         **dataset_specific_params
     }
@@ -219,14 +239,12 @@ def main():
 
     spark = get_spark_session()
 
-    train_df, test_df = load_test_and_train(
-        spark=spark,
-        data_path=f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/CSV/{dataset_name}.csv"
-    )
+    data_path, run_params = get_lightgbm_params(dataset_name)
+
+    train_df, test_df = load_test_and_train(spark=spark, data_path=data_path)
 
     print(f"ASSEMBLED DATASET SIZE: {train_df.count()}")
 
-    run_params = get_lightgbm_params(dataset_name)
     features = [c for c in train_df.columns if c not in [run_params['labelCol'], '_id', 'reader_fold_num', 'is_val']]
     assembler = VectorAssembler(inputCols=features, outputCol=run_params['featuresCol'], handleInvalid="error")
 
