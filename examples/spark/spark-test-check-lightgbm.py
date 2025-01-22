@@ -38,10 +38,10 @@ GENERAL_RUN_PARAMS = {
     'matrixType': 'auto',
     'maxStreamingOMPThreads': 1,
 
-    # 'dataTransferMode': 'bulk',
+    'dataTransferMode': 'bulk',
     # 'numTasks': 6,
 
-    'dataTransferMode': 'streaming',
+    # 'dataTransferMode': 'streaming',
     # 'numTasks': 6
 }
 
@@ -77,6 +77,14 @@ def get_lightgbm_params(dataset_name: str) -> Tuple[str, Dict[str, Any]]:
                 'predictionCol': 'prediction'
             }
         case "used_cars_dataset":
+            dataset_specific_params = {
+                'labelCol': "price",
+                'objective': 'regression',
+                'metric': 'rmse',
+                'predictionCol': 'prediction'
+            }
+        case "small_used_cars_dataset":
+            data_path = "hdfs://node21.bdcl:9000/opt/preprocessed_datasets/small_used_cars_dataset.slama/data.parquet"
             dataset_specific_params = {
                 'labelCol': "price",
                 'objective': 'regression',

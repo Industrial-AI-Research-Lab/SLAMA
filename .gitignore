@@ -165,6 +165,7 @@ dumps
 *.orig
 
 jars/*.jar
+jars/*.backup
 !jars/spark-lightautoml_*.jar
 !jars/jvm-profiler*.jar
 
