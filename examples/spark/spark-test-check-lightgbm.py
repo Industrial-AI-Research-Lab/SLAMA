@@ -46,7 +46,7 @@ GENERAL_RUN_PARAMS = {
 }
 
 
-def get_lightgbm_params(dataset_name: str) -> Tuple[str, Dict[str, Any]]:
+def get_lightgbm_params(spark: SparkSession, dataset_name: str) -> Tuple[str, Dict[str, Any]]:
     data_path = None
     match dataset_name:
         case "company_bankruptcy_dataset":
@@ -118,9 +118,12 @@ def get_lightgbm_params(dataset_name: str) -> Tuple[str, Dict[str, Any]]:
 
     data_path = data_path or f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/CSV/{dataset_name}.csv"
 
+    execs = int(spark.conf.get("spark.executor.instances", "1"))
+
     return data_path, {
         **GENERAL_RUN_PARAMS,
-        **dataset_specific_params
+        **dataset_specific_params,
+        "numTasks": execs
     }
 
 
@@ -213,14 +216,14 @@ def load_test_and_train(
     #     print("Removing bug-related columns from small_used_cars")
 
     # small adjustment in values making them non-categorial prevent SIGSEGV from happening
-    data = data.na.fill(0.0453)
-    data = data.select(
-        *[
-            (sf.col(c) + (sf.rand() / sf.lit(10.0)) + sf.lit(0.05)).alias(c)
-            for c in data.columns if c not in ['_id', 'price']
-        ],
-        'price'
-    )
+    # data = data.na.fill(0.0453)
+    # data = data.select(
+    #     *[
+    #         (sf.col(c) + (sf.rand() / sf.lit(10.0)) + sf.lit(0.05)).alias(c)
+    #         for c in data.columns if c not in ['_id', 'price']
+    #     ],
+    #     'price'
+    # )
 
     execs = int(spark.conf.get("spark.executor.instances", "1"))
     cores = int(spark.conf.get("spark.executor.cores", "8"))
@@ -252,7 +255,7 @@ def main():
 
     spark = get_spark_session()
 
-    data_path, run_params = get_lightgbm_params(dataset_name)
+    data_path, run_params = get_lightgbm_params(spark, dataset_name)
 
     train_df, test_df = load_test_and_train(spark=spark, data_path=data_path)
 
