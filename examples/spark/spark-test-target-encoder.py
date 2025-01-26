@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 from typing import Optional
@@ -9,6 +10,11 @@ from pyspark.sql import SparkSession
 from sparklightautoml.dataset.base import SparkDataset
 from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
 from sparklightautoml.transformers.categorical import SparkTargetEncoderEstimator
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(threadName)s %(levelname)s %(module)s %(filename)s:%(lineno)d %(message)s")
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_spark_session(partitions_num: Optional[int] = None):
@@ -172,6 +178,8 @@ def main():
 
         roles = {f: dataset.roles[f] for f in feats_to_select}
 
+        print(f"FEATS_TO_SELECT: {feats_to_select}")
+
         estimator = SparkTargetEncoderEstimator(
             input_cols=feats_to_select,
             input_roles=roles,
@@ -182,6 +190,7 @@ def main():
 
         # fit
         transformer = estimator.fit(dataset.data)
+        print("FIT iS FINISHED")
 
         # save
         transformer = PipelineModel(stages=[transformer])
@@ -190,6 +199,8 @@ def main():
     # process
     df = transformer.transform(dataset.data)
     df.write.mode("overwrite").format("noop").save()
+
+    print("TRANSFORM iS FINISHED")
 
 
 if __name__ == "__main__":

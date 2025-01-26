@@ -28,14 +28,14 @@ if __name__ == "__main__":
         "max_intersection_depth": 3,
         "multiclass_te_co": 3,
         "output_categories": True,
-        "debug_only_le_without_te": False,
+        "debug_only_le_without_te": True,
         "top_intersections": 4,
     }
     # dataset_name = "lama_test_dataset"
-    dataset_name = "small_used_cars_dataset"
+    # dataset_name = "small_used_cars_dataset"
     # dataset_name = "used_cars_dataset"
     # dataset_name = "used_cars_dataset_4x"
-    # dataset_name = "used_cars_dataset_10x"
+    dataset_name = "used_cars_dataset_10x"
     # dataset_name = "company_bankruptcy_dataset"
     # dataset_name = "company_bankruptcy_dataset_100x"
     # dataset_name = "company_bankruptcy_dataset_10000x"
