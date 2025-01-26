@@ -152,9 +152,9 @@ def main():
 
     print(f"Working with dataset: {dataset_name}")
 
-    spark = get_spark_session()
+    data_path = f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama/data.parquet"
 
-    data_path = get_lightgbm_params(dataset_name)
+    spark = get_spark_session()
 
     dataset = load_data(spark=spark, data_path=data_path)
 
