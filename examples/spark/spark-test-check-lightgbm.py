@@ -38,10 +38,10 @@ GENERAL_RUN_PARAMS = {
     'matrixType': 'auto',
     'maxStreamingOMPThreads': 1,
 
-    'dataTransferMode': 'bulk',
+    # 'dataTransferMode': 'bulk',
     # 'numTasks': 6,
 
-    # 'dataTransferMode': 'streaming',
+    'dataTransferMode': 'streaming',
     # 'numTasks': 6
 }
 
