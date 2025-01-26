@@ -173,7 +173,10 @@ def get_spark_session(partitions_num: Optional[int] = None):
 
 
 def load_data(spark: SparkSession, data_path: str, partitions_coefficient: int = 1) -> DataFrame:
-    data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
+    if data_path.endswith('.csv'):
+        data = spark.read.csv(data_path, header=True, inferSchema=True, encoding="UTF-8")
+    else:
+        data = spark.read.parquet(data_path)
 
     execs = int(spark.conf.get("spark.executor.instances", "1"))
     cores = int(spark.conf.get("spark.executor.cores", "8"))
