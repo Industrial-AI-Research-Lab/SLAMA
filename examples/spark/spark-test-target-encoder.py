@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Optional
 
+from pyspark.ml import PipelineModel
 from pyspark.sql import SparkSession
 
 from sparklightautoml.dataset.base import SparkDataset
@@ -164,7 +165,16 @@ def main():
         folds_column=dataset.folds_column,
     )
 
+    # fit
     transformer = estimator.fit(dataset.data)
+
+    # save
+    transformer = PipelineModel(stages=[transformer])
+    transformer.write().overwrite().save(
+        f"hdfs://node21.bdcl:9000/opt/transformers/target_encoder_{dataset_name}.transformer"
+    )
+
+    # process
     df = transformer.transform(dataset.data)
     df.count()
 
