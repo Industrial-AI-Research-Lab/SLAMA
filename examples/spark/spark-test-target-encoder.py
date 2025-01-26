@@ -153,39 +153,43 @@ def main():
     print(f"Working with dataset: {dataset_name}")
 
     data_path = f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama"
+    transformer_path = f"hdfs://node21.bdcl:9000/opt/transformers/target_encoder_{dataset_name}.transformer"
 
     spark = get_spark_session()
 
     dataset = load_data(spark=spark, data_path=data_path)
 
-    # prepare estimator
-    feats_to_select = []
-    for i in ["auto", "oof", "int", "ohe"]:
-        feats = get_columns_by_role(dataset, "Category", encoding_type=i)
-        feats_to_select.extend(feats)
+    do_loading = False
 
-    roles = {f: dataset.roles[f] for f in feats_to_select}
+    if do_loading:
+        transformer = PipelineModel.load(transformer_path)
+    else:
+        # prepare estimator
+        feats_to_select = []
+        for i in ["auto", "oof", "int", "ohe"]:
+            feats = get_columns_by_role(dataset, "Category", encoding_type=i)
+            feats_to_select.extend(feats)
 
-    estimator = SparkTargetEncoderEstimator(
-        input_cols=feats_to_select,
-        input_roles=roles,
-        task_name=dataset.task.name,
-        target_column=dataset.target_column,
-        folds_column=dataset.folds_column,
-    )
+        roles = {f: dataset.roles[f] for f in feats_to_select}
 
-    # fit
-    transformer = estimator.fit(dataset.data)
+        estimator = SparkTargetEncoderEstimator(
+            input_cols=feats_to_select,
+            input_roles=roles,
+            task_name=dataset.task.name,
+            target_column=dataset.target_column,
+            folds_column=dataset.folds_column,
+        )
 
-    # save
-    transformer = PipelineModel(stages=[transformer])
-    transformer.write().overwrite().save(
-        f"hdfs://node21.bdcl:9000/opt/transformers/target_encoder_{dataset_name}.transformer"
-    )
+        # fit
+        transformer = estimator.fit(dataset.data)
+
+        # save
+        transformer = PipelineModel(stages=[transformer])
+        transformer.write().overwrite().save(transformer_path)
 
     # process
     df = transformer.transform(dataset.data)
-    df.count()
+    df.write.mode("overwrite").format("noop").save()
 
 
 if __name__ == "__main__":
