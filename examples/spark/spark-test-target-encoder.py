@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Optional
 
+from lightautoml.pipelines.utils import get_columns_by_role
 from pyspark.ml import PipelineModel
 from pyspark.sql import SparkSession
 
@@ -157,9 +158,17 @@ def main():
 
     dataset = load_data(spark=spark, data_path=data_path)
 
+    # prepare estimator
+    feats_to_select = []
+    for i in ["auto", "oof", "int", "ohe"]:
+        feats = get_columns_by_role(dataset, "Category", encoding_type=i)
+        feats_to_select.extend(feats)
+
+    roles = {f: dataset.roles[f] for f in feats_to_select}
+
     estimator = SparkTargetEncoderEstimator(
-        input_cols=dataset.features,
-        input_roles=dataset.roles,
+        input_cols=feats_to_select,
+        input_roles=roles,
         task_name=dataset.task.name,
         target_column=dataset.target_column,
         folds_column=dataset.folds_column,
