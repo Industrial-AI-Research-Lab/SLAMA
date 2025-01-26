@@ -152,7 +152,7 @@ def main():
 
     print(f"Working with dataset: {dataset_name}")
 
-    data_path = f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama/data.parquet"
+    data_path = f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{dataset_name}.slama"
 
     spark = get_spark_session()
 

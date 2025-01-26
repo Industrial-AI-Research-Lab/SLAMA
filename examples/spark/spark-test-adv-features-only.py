@@ -27,7 +27,7 @@ if __name__ == "__main__":
         "auto_unique_co": 1,
         "max_intersection_depth": 3,
         "multiclass_te_co": 3,
-        "output_categories": False,
+        "output_categories": True,
         "top_intersections": 4,
     }
     # dataset_name = "lama_test_dataset"
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)
         sdataset = spipe.fit_transform(sdataset)
         sdataset.save(
-            f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/adv_{dataset_name}.slama",
+            f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/half_adv_{dataset_name}.slama",
             save_mode="overwrite",
             num_partitions=1
         )
