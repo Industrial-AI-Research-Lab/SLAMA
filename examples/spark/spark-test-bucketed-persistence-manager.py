@@ -6,6 +6,8 @@ def main():
 
     df = spark.read.csv("hdfs://node21.bdcl:9000/opt/spark_data/sampled_app_train.csv", header=True, escape="")
 
+    print(f"DATA: {df.count()}")
+
     id_col = "SK_ID_CURR"
 
     (
