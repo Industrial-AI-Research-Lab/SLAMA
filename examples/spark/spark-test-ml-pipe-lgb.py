@@ -26,10 +26,10 @@ if __name__ == "__main__":
     spark = get_spark_session()
 
     # persistence_manager = PlainCachePersistenceManager()
-    # persistence_manager = get_persistence_manager()
-    persistence_manager = BucketedPersistenceManager(
-        bucketed_datasets_folder="hdfs://node21.bdcl:9000/tmp", bucket_nums=6, no_unpersisting=True
-    )
+    persistence_manager = get_persistence_manager()
+    # persistence_manager = BucketedPersistenceManager(
+    #     bucketed_datasets_folder="hdfs://node21.bdcl:9000/tmp", bucket_nums=6, no_unpersisting=True
+    # )
 
     seed = 42
     cv = 5

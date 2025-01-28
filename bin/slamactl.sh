@@ -240,6 +240,7 @@ function submit_job_k8s() {
 
   extra_java_options="-Dlog4j.configuration=log4j2.properties ${extra_java_options}"
 
+  # TODO: spark.sql.warehouse.dir should be customizable
   spark-submit \
     --master k8s://${APISERVER} \
     --deploy-mode cluster \
@@ -257,6 +258,7 @@ function submit_job_k8s() {
     --conf "spark.memory.storageFraction=${SPARK_MEMORY_STORAGE_FRACTION:-0.6}" \
     --conf "spark.sql.autoBroadcastJoinThreshold=100MB" \
     --conf "spark.sql.execution.arrow.pyspark.enabled=true" \
+    --conf "spark.sql.warehouse.dir=hdfs://node21.bdcl:9000/tmp/custom-spark-warehouse" \
     --conf "spark.kubernetes.container.image=${IMAGE}" \
     --conf "spark.kubernetes.namespace=${KUBE_NAMESPACE}" \
     --conf "spark.kubernetes.authenticate.driver.serviceAccountName=spark" \

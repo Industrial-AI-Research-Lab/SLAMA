@@ -21,6 +21,7 @@ def main():
     ds = spark.table("test")
 
     print(f"DATA in TABLE: {ds.count()}")
+    k = 0
 
 
 if __name__ == "__main__":
