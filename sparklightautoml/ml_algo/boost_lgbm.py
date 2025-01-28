@@ -213,6 +213,9 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
         self._experimental_parallel_mode = experimental_parallel_mode
         self._dump_before_fitting_dataset_path = dump_before_fitting_dataset_path
 
+        assert not (self._executin_mode == "streaming" and self._experimental_parallel_mode), \
+            "Cannot combine streaming mode with compute-parallel execution due to bug in SynapseML LightGBM"
+
     def _infer_params(self, runtime_settings: Optional[Dict[str, Any]] = None) -> Tuple[dict, int]:
         """Infer all parameters in lightgbm format.
 

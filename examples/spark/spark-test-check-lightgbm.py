@@ -34,7 +34,7 @@ GENERAL_RUN_PARAMS = {
     'numIterations': 50,
     'earlyStoppingRound': 200,
     # 'numTasks': None,
-    'numThreads': 3,
+    'numThreads': 4,
     'matrixType': 'auto',
     'maxStreamingOMPThreads': 1,
 
