@@ -1,9 +1,9 @@
 import logging.config
 import os
 
-from examples_utils import get_dataset, load_data
+from examples_utils import get_dataset, load_data, get_persistence_manager
 from examples_utils import get_spark_session
-from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
+from sparklightautoml.dataset.persistence import PlainCachePersistenceManager, BucketedPersistenceManager
 from sparklightautoml.ml_algo.boost_lgbm import SparkBoostLGBM
 from sparklightautoml.pipelines.features.lgb_pipeline import SparkLGBSimpleFeatures
 from sparklightautoml.pipelines.ml.base import SparkMLPipeline
@@ -25,7 +25,11 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     spark = get_spark_session()
 
-    persistence_manager = PlainCachePersistenceManager()
+    # persistence_manager = PlainCachePersistenceManager()
+    # persistence_manager = get_persistence_manager()
+    persistence_manager = BucketedPersistenceManager(
+        bucketed_datasets_folder="hdfs://node21.bdcl:9000/tmp", bucket_nums=6, no_unpersisting=True
+    )
 
     seed = 42
     cv = 5
