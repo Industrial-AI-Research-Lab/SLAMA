@@ -243,7 +243,7 @@ function submit_job_k8s() {
   spark-submit \
     --master k8s://${APISERVER} \
     --deploy-mode cluster \
-    --conf "spark.kryoserializer.buffer.max=512m" \
+    --conf "spark.kryoserializer.buffer.max=1024m" \
     --conf "spark.scheduler.minRegisteredResourcesRatio=1.0" \
     --conf "spark.scheduler.maxRegisteredResourcesWaitingTime=180s" \
     --conf "spark.task.maxFailures=1" \

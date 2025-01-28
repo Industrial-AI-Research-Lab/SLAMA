@@ -163,7 +163,7 @@ def main():
 
     spark = get_spark_session()
 
-    dataset = load_data(spark=spark, data_path=data_path)
+    dataset = load_data(spark=spark, data_path=data_path, partitions_coefficient=4)
 
     do_loading = False
 
@@ -178,7 +178,7 @@ def main():
 
         roles = {f: dataset.roles[f] for f in feats_to_select}
 
-        print(f"FEATS_TO_SELECT: {feats_to_select}")
+        logger.info(f"FEATS_TO_SELECT: {feats_to_select}")
 
         estimator = SparkTargetEncoderEstimator(
             input_cols=feats_to_select,
@@ -190,7 +190,7 @@ def main():
 
         # fit
         transformer = estimator.fit(dataset.data)
-        print("FIT iS FINISHED")
+        logger.info("FIT IS FINISHED")
 
         # save
         transformer = PipelineModel(stages=[transformer])
@@ -200,7 +200,7 @@ def main():
     df = transformer.transform(dataset.data)
     df.write.mode("overwrite").format("noop").save()
 
-    print("TRANSFORM iS FINISHED")
+    logger.info("TRANSFORM iS FINISHED")
 
 
 if __name__ == "__main__":

@@ -24,11 +24,11 @@ if __name__ == "__main__":
     seed = 42
     cv = 5
     ml_alg_kwargs = {
-        "auto_unique_co": 1,
-        "max_intersection_depth": 3,
+        "auto_unique_co": 10,
+        "max_intersection_depth": 1,
         "multiclass_te_co": 3,
-        "output_categories": True,
-        "debug_only_le_without_te": True,
+        "output_categories": False,
+        "debug_only_le_without_te": False,
         "top_intersections": 4,
     }
     # dataset_name = "lama_test_dataset"
@@ -36,6 +36,7 @@ if __name__ == "__main__":
     # dataset_name = "used_cars_dataset"
     # dataset_name = "used_cars_dataset_4x"
     dataset_name = "used_cars_dataset_10x"
+    # dataset_name = "used_cars_dataset_40x"
     # dataset_name = "company_bankruptcy_dataset"
     # dataset_name = "company_bankruptcy_dataset_100x"
     # dataset_name = "company_bankruptcy_dataset_10000x"
@@ -61,11 +62,11 @@ if __name__ == "__main__":
         sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)
         sdataset = spipe.fit_transform(sdataset)
         name_prefix = "half_adv" if ml_alg_kwargs.get("debug_only_le_without_te", False) else "adv"
-        sdataset.save(
-            f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{name_prefix}_{dataset_name}.slama",
-            save_mode="overwrite",
-            num_partitions=1
-        )
+        # sdataset.save(
+        #     f"hdfs://node21.bdcl:9000/opt/preprocessed_datasets/{name_prefix}_{dataset_name}.slama",
+        #     save_mode="overwrite",
+        #     num_partitions=1
+        # )
 
         # # How to load
         # sdataset = SparkDataset.load(

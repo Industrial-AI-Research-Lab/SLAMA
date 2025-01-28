@@ -49,28 +49,28 @@ class TargetEncoderTransformer(
         logger.info("Creating TargetEncoderTransformer")
 
         ########### TODO: debug remove later
-        # from hdfs import InsecureClient
-        # import uuid
-        # run_id = uuid.uuid4()
-        # data = {
-        #     "enc": enc,
-        #     "oof_enc": oof_enc,
-        #     "fold_column": fold_column,
-        #     "apply_oof": apply_oof,
-        #     "input_cols": input_cols,
-        #     "output_cols": output_cols
-        # }
-        # data_str = pickle.dumps(data)
-        # logger.info(f"Dumped TET state to str")
-        #
-        # client = InsecureClient('http://node21.bdcl:9870', user='test')
-        # base_hdfs_path = "/tmp/tet_dumps"
-        # client.makedirs(base_hdfs_path, )
-        #
-        # hdfs_path = os.path.join(base_hdfs_path, f"{run_id}.pickle_str")
-        # with client.write(hdfs_path) as writer:
-        #     writer.write(data_str)
-        # logger.info(f"Write the pickled state to HDFS to {hdfs_path}")
+        from hdfs import InsecureClient
+        import uuid
+        run_id = uuid.uuid4()
+        data = {
+            "enc": enc,
+            "oof_enc": oof_enc,
+            "fold_column": fold_column,
+            "apply_oof": apply_oof,
+            "input_cols": input_cols,
+            "output_cols": output_cols
+        }
+        data_str = pickle.dumps(data)
+        logger.info(f"Dumped TET state to str")
+
+        client = InsecureClient('http://node21.bdcl:9870', user='test')
+        base_hdfs_path = "/tmp/tet_dumps"
+        client.makedirs(base_hdfs_path, )
+
+        hdfs_path = os.path.join(base_hdfs_path, f"{run_id}.pickle_str")
+        with client.write(hdfs_path) as writer:
+            writer.write(data_str)
+        logger.info(f"Write the pickled state to HDFS to {hdfs_path}")
         #######################################################
 
         uid = f"TargetEncoderTransformer_{str(uuid4()).replace('-', '_')}"
