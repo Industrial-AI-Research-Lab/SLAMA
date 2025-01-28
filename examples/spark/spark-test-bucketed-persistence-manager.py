@@ -4,7 +4,7 @@ from examples.spark.examples_utils import get_spark_session
 def main():
     spark = get_spark_session()
 
-    df = spark.read.parquet("hdfs://node21.bdcl:9000/opt/spark_data/lama_test_dataset.csv")
+    df = spark.read.csv("hdfs://node21.bdcl:9000/opt/spark_data/sampled_app_train.csv", header=True, escape="")
 
     id_col = "SK_ID_CURR"
 
