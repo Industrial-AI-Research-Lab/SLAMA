@@ -34,7 +34,7 @@ GENERAL_RUN_PARAMS = {
     'numIterations': 50,
     'earlyStoppingRound': 200,
     # 'numTasks': None,
-    # 'numThreads': 3,
+    'numThreads': 3,
     'matrixType': 'auto',
     'maxStreamingOMPThreads': 1,
 
@@ -287,10 +287,10 @@ def main():
     model = lgbm.fit(df)
     print("Training is finished")
 
-    # df = assembler.transform(test_df)
-    # predicts_df = model.transform(df)
-    # predicts_df.write.mode("overwrite").format("noop").save()
-    # print("Predicting is finished")
+    df = assembler.transform(test_df)
+    predicts_df = model.transform(df)
+    predicts_df.write.mode("overwrite").format("noop").save()
+    print("Predicting is finished")
 
     # time.sleep(600)
 
