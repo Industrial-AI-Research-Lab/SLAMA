@@ -1,4 +1,4 @@
-from examples.spark.examples_utils import get_spark_session
+from examples_utils import get_spark_session
 
 
 def main():
