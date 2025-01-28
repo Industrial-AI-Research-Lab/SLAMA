@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
         task = SparkTask(dataset.task_type)
 
-        sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
+        sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False, )
         spipe = SparkLGBAdvancedPipeline(**ml_alg_kwargs)
 
         sdataset = sreader.fit_read(train_df, roles=dataset.roles, persistence_manager=persistence_manager)

@@ -64,6 +64,7 @@ used_cars_params = {
             "main_picture_url",
             "interior_color",
             "exterior_color",
+            "vin"
         ],
         "numeric": ["latitude", "longitude", "mileage"],
     },
@@ -87,7 +88,7 @@ used_cars_preproc_params = {
     "file_format": "parquet",
     "task_type": "reg",
     "roles": {
-        "target": "price"
+        "target": "price",
     }
 }
 
@@ -99,8 +100,8 @@ DATASETS = {
     "small_used_cars_dataset": Dataset(path=ds_path("small_used_cars_data.csv"), **used_cars_params),
     "used_cars_dataset": Dataset(path=ds_path("used_cars_data.csv"), **used_cars_params),
     # "used_cars_dataset_1x": Dataset(path=ds_path("derivative_datasets/1x_dataset.csv"), **used_cars_params),
-    "used_cars_dataset_4x": Dataset(path=ds_path("used_cars_4x_dataset.csv"), **used_cars_params),
-    "used_cars_dataset_10x": Dataset(path=ds_path("used_cars_10x_dataset.csv"), **used_cars_params),
+    "used_cars_dataset_4x": Dataset(path=ds_path("used_cars_data_4x_2.csv"), **used_cars_params),
+    "used_cars_dataset_10x": Dataset(path=ds_path("used_cars_data_10x_2.csv"), **used_cars_params),
     "used_cars_dataset_40x": Dataset(path=ds_path("used_cars_40x_dataset.csv"), **used_cars_params),
     "used_cars_dataset_100x": Dataset(path=ds_path("used_cars_100x_dataset.csv"), **used_cars_params),
     "used_cars_dataset_100x_preproc": Dataset(
