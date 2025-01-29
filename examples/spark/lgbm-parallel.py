@@ -226,7 +226,7 @@ def main():
     partitions_num = 6
     spark = get_spark_session(partitions_num=partitions_num)
 
-    exp = ParallelExperiment(spark, dataset_name="used_cars_dataset")
+    exp = ParallelExperiment(spark, dataset_name="lama_test_dataset")
     exp.prepare_dataset()
     results = exp.run()
 
