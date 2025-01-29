@@ -239,8 +239,8 @@ def clean_java_processes():
                 logger.warning(f"Exception during killing the java process with pid {pid}", exc_info=True)
 
 
-def check_lightgbm():
-    dataset_name = sys.argv[1]
+def check_lightgbm(*args):
+    dataset_name = args[0]
 
     print(f"Working with dataset: {dataset_name}")
 
@@ -278,7 +278,7 @@ def check_lightgbm():
     clean_java_processes()
 
 
-def check_simple_features_only():
+def check_simple_features_only(*args):
     spark = get_spark_session()
 
     cv = 5
@@ -385,7 +385,7 @@ def check_adv_features_only():
     spark.stop()
 
 
-def check_lgb_on_prep_dataset():
+def check_lgb_on_prep_dataset(*args):
     spark = get_spark_session()
 
     dataset_name = os.getenv('DATASET_NAME', 'company_bankruptcy_dataset_100x')
@@ -430,13 +430,13 @@ def main():
 
     match check_name:
         case "lightgbm":
-            check_lightgbm()
+            check_lightgbm(*sys.argvs[2:])
         case "simple-features-only":
-            check_simple_features_only()
+            check_simple_features_only(*sys.argvs[2:])
         case "adv-features-only":
-            check_adv_features_only()
+            check_adv_features_only(*sys.argvs[2:])
         case "lgb-on-prep-dataset":
-            check_lgb_on_prep_dataset()
+            check_lgb_on_prep_dataset(*sys.argvs[2:])
         case _:
             raise ValueError(f"No check with name {check_name}")
 
