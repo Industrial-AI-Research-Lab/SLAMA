@@ -11,7 +11,6 @@ from pyspark.ml.feature import VectorAssembler
 from pyspark.sql import SparkSession, DataFrame
 from synapse.ml.lightgbm import LightGBMClassifier, LightGBMRegressor
 
-from examples_utils import get_dataset
 from sparklightautoml.dataset.base import SparkDataset
 from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
 from sparklightautoml.ml_algo.boost_lgbm import SparkBoostLGBM
@@ -208,35 +207,6 @@ def load_test_and_train(
     else:
         data = spark.read.parquet(data_path)
 
-    # if "adv_small_used_cars_dataset" in data_path:
-    #     data = data.select(
-    #         *[
-    #             c for c in data.columns if c in [
-    #                 # 'engine_displacement',
-    #                 # 'highway_fuel_economy',
-    #                 # 'mileage',
-    #                 # 'listing_id',
-    #
-    #                 'ord__bed_height',
-    #                 'ord__is_oemcpo',
-    #                 'ord__is_cpo',
-    #
-    #                 # 'daysonmarket',
-    #                 # 'owner_count',
-    #                 # 'horsepower',
-    #                 # 'savings_amount',
-    #                 # 'city_fuel_economy',
-    #
-    #                 # '_id', 'price',
-    #                 # 'longitude',
-    #                 # 'seller_rating',
-    #                 # 'latitude'
-    #             ]
-    #         ],
-    #         'price'
-    #     )
-    #     print("Removing bug-related columns from small_used_cars")
-
     # small adjustment in values making them non-categorial prevent SIGSEGV from happening
     # data = data.na.fill(0.0453)
     # data = data.select(
@@ -312,7 +282,6 @@ def check_lightgbm():
 def check_simple_features_only():
     spark = get_spark_session()
 
-    seed = 42
     cv = 5
     # dataset_name = "lama_test_dataset"
     # dataset_name = "small_used_cars_dataset"
@@ -358,7 +327,6 @@ def check_simple_features_only():
 def check_adv_features_only():
     spark = get_spark_session()
 
-    seed = 42
     cv = 5
     ml_alg_kwargs = {
         "auto_unique_co": 10,
@@ -421,8 +389,6 @@ def check_adv_features_only():
 def check_lgb_on_prep_dataset():
     spark = get_spark_session()
 
-    seed = 42
-    cv = 5
     dataset_name = os.getenv('DATASET_NAME', 'company_bankruptcy_dataset_100x')
     # dataset_name = "used_cars_dataset"
     dataset = get_dataset(dataset_name)
@@ -460,125 +426,6 @@ def check_lgb_on_prep_dataset():
     spark.stop()
 
 
-def check_ml_pipe_lgb():
-    spark = get_spark_session()
-
-    persistence_manager = PlainCachePersistenceManager()
-
-    seed = 42
-    cv = 5
-    dataset_name = os.getenv('DATASET_NAME', 'lama_test_dataset')
-    dataset = get_dataset(dataset_name)
-
-    ml_alg_kwargs = {
-        "auto_unique_co": 10,
-        "max_intersection_depth": 3,
-        "multiclass_te_co": 3,
-        "output_categories": True,
-        "top_intersections": 4,
-    }
-
-    with log_exec_time():
-        data = load_data(dataset)
-
-        task = SparkTask(dataset.task_type)
-        score = task.get_dataset_metric()
-        sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
-        spark_ml_algo = SparkBoostLGBM(
-            default_params={
-                "numIterations": 50,
-            },
-            freeze_defaults=True,
-            execution_mode="bulk"
-        )
-        spark_features_pipeline = SparkLGBSimpleFeatures()
-        # spark_features_pipeline = SparkLGBAdvancedPipeline(**ml_alg_kwargs)
-
-        ml_pipe = SparkMLPipeline(
-            ml_algos=[spark_ml_algo],
-            pre_selection=None,
-            features_pipeline=spark_features_pipeline,
-            post_selection=None,
-        )
-
-        sdataset = sreader.fit_read(data, roles=dataset.roles, persistence_manager=persistence_manager)
-
-        iterator = SparkFoldsIterator(sdataset, n_folds=cv)
-
-        oof_preds_ds = ml_pipe.fit_predict(iterator).persist()
-        oof_score = score(oof_preds_ds[:, spark_ml_algo.prediction_feature])
-        logger.info(f"OOF score: {oof_score}")
-
-    logger.info("Finished")
-
-    oof_preds_ds.unpersist()
-    # this is necessary if persistence_manager is of CompositeManager type
-    # it may not be possible to obtain oof_predictions (predictions from fit_predict) after calling unpersist_all
-    persistence_manager.unpersist_all()
-
-    spark.stop()
-
-
-def check_ml_pipe_lgb_optuna():
-    spark = get_spark_session()
-
-    persistence_manager = PlainCachePersistenceManager()
-
-    seed = 42
-    cv = 5
-    dataset_name = os.getenv('DATASET_NAME', 'lama_test_dataset')
-    dataset = get_dataset(dataset_name)
-
-    ml_alg_kwargs = {
-        "auto_unique_co": 10,
-        "max_intersection_depth": 3,
-        "multiclass_te_co": 3,
-        "output_categories": True,
-        "top_intersections": 4,
-    }
-
-    with log_exec_time():
-        data = load_data(spark, dataset)
-
-        task = SparkTask(dataset.task_type)
-        score = task.get_dataset_metric()
-        sreader = SparkToSparkReader(task=task, cv=cv, advanced_roles=False)
-        spark_ml_algo = SparkBoostLGBM(
-            default_params={
-                "numIterations": 50,
-            },
-            freeze_defaults=True,
-            execution_mode="bulk"
-        )
-        spark_features_pipeline = SparkLGBSimpleFeatures()
-        params_tuner1 = OptunaTuner(n_trials=10, timeout=300)
-        # spark_features_pipeline = SparkLGBAdvancedPipeline(**ml_alg_kwargs)
-
-        ml_pipe = SparkMLPipeline(
-            ml_algos=[(spark_ml_algo, params_tuner1)],
-            pre_selection=None,
-            features_pipeline=spark_features_pipeline,
-            post_selection=None,
-        )
-
-        sdataset = sreader.fit_read(data, roles=dataset.roles, persistence_manager=persistence_manager)
-
-        iterator = SparkFoldsIterator(sdataset, n_folds=cv)
-
-        oof_preds_ds = ml_pipe.fit_predict(iterator).persist()
-        oof_score = score(oof_preds_ds[:, spark_ml_algo.prediction_feature])
-        logger.info(f"OOF score: {oof_score}")
-
-    logger.info("Finished")
-
-    oof_preds_ds.unpersist()
-    # this is necessary if persistence_manager is of CompositeManager type
-    # it may not be possible to obtain oof_predictions (predictions from fit_predict) after calling unpersist_all
-    persistence_manager.unpersist_all()
-
-    spark.stop()
-
-
 def main():
     check_name = sys.argv[1]
 
@@ -591,10 +438,6 @@ def main():
             check_adv_features_only()
         case "lgb-on-prep-dataset":
             check_lgb_on_prep_dataset()
-        case "ml-pipe-lgb":
-            check_ml_pipe_lgb()
-        case "ml-pipe-lgb-optuna":
-            check_ml_pipe_lgb_optuna()
         case _:
             raise ValueError(f"No check with name {check_name}")
 
