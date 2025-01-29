@@ -1,4 +1,5 @@
 import inspect
+import pathlib
 import os
 
 from dataclasses import dataclass
@@ -18,8 +19,9 @@ from sparklightautoml.utils import get_current_session
 
 BUCKET_NUMS = 6
 PERSISTENCE_MANAGER_ENV_VAR = "PERSISTENCE_MANAGER"
-BASE_PREFIX = "hdfs://node21.bdcl:9000"
-BASE_DATASETS_PATH = f"{BASE_PREFIX}/opt/spark_data/"
+
+BASE_PREFIX = ""
+BASE_DATASETS_PATH = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), 'data')
 
 
 @dataclass(frozen=True)
