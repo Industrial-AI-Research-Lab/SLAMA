@@ -6,7 +6,6 @@ import time
 from typing import Optional, Any, Dict, Tuple
 
 import psutil
-from lightautoml.ml_algo.tuning.optuna import OptunaTuner
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql import SparkSession, DataFrame
 from synapse.ml.lightgbm import LightGBMClassifier, LightGBMRegressor
