@@ -225,7 +225,7 @@ def get_spark_session(partitions_num: Optional[int] = None):
 
 
 def get_persistence_manager(name: Optional[str] = None):
-    arg_vals = {"bucketed_datasets_folder": "/tmp", "bucket_nums": BUCKET_NUMS}
+    arg_vals = {"bucket_nums": BUCKET_NUMS}
 
     class_name = name or os.environ.get(PERSISTENCE_MANAGER_ENV_VAR, None) or "CompositeBucketedPersistenceManager"
     clazz = getattr(persistence, class_name)
