@@ -1,15 +1,13 @@
 import logging.config
 
-from examples_utils import get_dataset
-from examples_utils import get_persistence_manager
-from examples_utils import get_spark_session
-from examples_utils import prepare_test_and_train
-from examples_utils import check_columns
 from pyspark.ml import PipelineModel
 from pyspark.sql import functions as sf
 
+from examples_utils import check_columns, get_persistence_manager
+from examples_utils import get_dataset
+from examples_utils import get_spark_session
+from examples_utils import prepare_test_and_train
 from sparklightautoml.dataset.base import SparkDataset
-from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
 from sparklightautoml.ml_algo.boost_lgbm import SparkBoostLGBM
 from sparklightautoml.pipelines.features.lgb_pipeline import SparkLGBSimpleFeatures
 from sparklightautoml.pipelines.ml.base import SparkMLPipeline
@@ -19,7 +17,6 @@ from sparklightautoml.utils import VERBOSE_LOGGING_FORMAT
 from sparklightautoml.utils import log_exec_time
 from sparklightautoml.utils import logging_config
 from sparklightautoml.validation.iterators import SparkFoldsIterator
-
 
 logging.config.dictConfig(logging_config(log_filename="/tmp/slama.log"))
 logging.basicConfig(level=logging.DEBUG, format=VERBOSE_LOGGING_FORMAT)
@@ -33,14 +30,11 @@ if __name__ == "__main__":
     spark = get_spark_session()
 
     seed = 42
-    cv = 2
+    cv = 5
     dataset_name = "lama_test_dataset"
-    # dataset_name = "used_cars_dataset"
     dataset = get_dataset(dataset_name)
 
-    # TODO: there is some problem with composite persistence manager on kubernetes. Need to research later.
-    # persistence_manager = get_persistence_manager()
-    persistence_manager = PlainCachePersistenceManager()
+    persistence_manager = get_persistence_manager()
 
     ml_alg_kwargs = {
         "auto_unique_co": 10,
@@ -92,9 +86,9 @@ if __name__ == "__main__":
         # 2. second way (Spark ML API, save-load-predict)
         transformer = PipelineModel(stages=[sreader.transformer(add_array_attrs=True), ml_pipe.transformer()])
 
-        transformer.write().overwrite().save("hdfs://node21.bdcl:9000/tmp/reader_and_spark_ml_pipe_lgb")
+        transformer.write().overwrite().save("/tmp/reader_and_spark_ml_pipe_lgb")
 
-        pipeline_model = PipelineModel.load("hdfs://node21.bdcl:9000/tmp/reader_and_spark_ml_pipe_lgb")
+        pipeline_model = PipelineModel.load("/tmp/reader_and_spark_ml_pipe_lgb")
         test_pred_df = pipeline_model.transform(test_df)
 
         check_columns(test_df, test_pred_df)
