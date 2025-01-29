@@ -280,8 +280,6 @@ class BucketedPersistenceManager(BasePersistenceManager):
             )
         ds = spark.table(name)
 
-        print(f"DS COUNT: {ds.count()}")
-
         logger.debug(
             f"Manager {self._uid}: the bucketed table has been made "
             f"for the dataset (uid={pdf.uid}, name={pdf.name}) with name {name} on path {path}."

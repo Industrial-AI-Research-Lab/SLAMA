@@ -191,7 +191,7 @@ def get_spark_session(partitions_num: Optional[int] = None):
 
         extra_jvm_options = ("-Dio.netty.tryReflectionSetAccessible=true "
                              "-Dlog4j.debug=false "
-                             "-Dlog4j.configuration=examples/spark/log4j.properties")
+                             "-Dlog4j.configuration=examples/spark/log4j2.properties")
 
         spark_sess = (
             SparkSession.builder.master(f"local[{partitions_num}]")
