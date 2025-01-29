@@ -28,7 +28,6 @@ if __name__ == "__main__":
         "max_intersection_depth": 1,
         "multiclass_te_co": 3,
         "output_categories": False,
-        "debug_only_le_without_te": False,
         "top_intersections": 4,
     }
     # dataset_name = "lama_test_dataset"

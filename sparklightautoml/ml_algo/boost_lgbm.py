@@ -185,8 +185,7 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
         experimental_parallel_mode: bool = False,
         persist_output_dataset: bool = True,
         computations_settings: Optional[ComputationalParameters] = None,
-        synapseml_lgbm_params: Optional[Dict[str, Any]] = None,
-        dump_before_fitting_dataset_path: Optional[str] = None
+        synapseml_lgbm_params: Optional[Dict[str, Any]] = None
     ):
         optimization_search_space = optimization_search_space if optimization_search_space else dict()
         SparkTabularMLAlgo.__init__(
@@ -215,7 +214,6 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
         self._use_barrier_execution_mode = use_barrier_execution_mode
         self._experimental_parallel_mode = experimental_parallel_mode
         self._lgbm_params = synapseml_lgbm_params or dict()
-        self._dump_before_fitting_dataset_path = dump_before_fitting_dataset_path
 
         assert not (self._executing_mode == "streaming" and self._experimental_parallel_mode), \
             ("Cannot combine streaming mode with compute-parallel execution due to bug in SynapseML LightGBM "
@@ -532,10 +530,6 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
                 f"Consider switching to bulk execution mode if such crashes happen",
                 RuntimeWarning,
             )
-
-        # only for debug purpose
-        if self._dump_before_fitting_dataset_path:
-            full_data.write.parquet(self._dump_before_fitting_dataset_path, mode="overwrite")
 
         # fitting the model
         ml_model = lgbm.fit(self._assembler.transform(full_data))

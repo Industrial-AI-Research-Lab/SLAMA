@@ -58,8 +58,7 @@ if __name__ == "__main__":
             },
             freeze_defaults=True,
             chunk_size=10_000,
-            execution_mode="bulk",
-            # execution_mode="streaming",
+            execution_mode="bulk"
         )
 
         ml_pipe = SparkMLPipeline(ml_algos=[spark_ml_algo])
