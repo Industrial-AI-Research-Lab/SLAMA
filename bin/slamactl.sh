@@ -199,19 +199,17 @@ function submit_job_k8s() {
     --conf "spark.memory.storageFraction=${SPARK_MEMORY_STORAGE_FRACTION:-0.6}" \
     --conf "spark.sql.autoBroadcastJoinThreshold=100MB" \
     --conf "spark.sql.execution.arrow.pyspark.enabled=true" \
-    --conf "spark.sql.warehouse.dir=hdfs://node21.bdcl:9000/tmp/custom-spark-warehouse" \
-
+    --conf "spark.sql.warehouse.dir=${SPARK_WAREHOUSE_DIR:-/tmp/spark-warehouse}" \
     --conf "spark.kubernetes.container.image=${IMAGE}" \
     --conf "spark.kubernetes.namespace=${KUBE_NAMESPACE}" \
-    --conf "spark.kubernetes.authenticate.driver.serviceAccountName=spark" \
+    --conf "spark.kubernetes.authenticate.driver.serviceAccountName=${SPARK_K8S_SERVICE_ACCOUNT:-spark}" \
     --conf "spark.kubernetes.memoryOverheadFactor=${SPARK_MEMORY_OVERHEAD_FACTOR:-0.4}" \
     --conf "spark.kubernetes.driver.label.appname=${CONFIG_SUFFIX}" \
     --conf "spark.kubernetes.executor.label.appname=${CONFIG_SUFFIX}" \
     --conf "spark.kubernetes.executor.deleteOnTermination=false" \
     --conf "spark.kubernetes.container.image.pullPolicy=Always" \
     --conf "spark.kubernetes.driverEnv.SCRIPT_ENV=cluster" \
-    --conf "spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir" \
-
+    --conf "spark.kubernetes.file.upload.path=${SPARK_K8S_FILE_UPLOAD_PATH:-/tmp/spark-upload-dir}" \
     --jars "${jars}" \
     --files "examples/spark/log4j2.properties" \
     --py-files "examples/spark/examples_utils.py" \
