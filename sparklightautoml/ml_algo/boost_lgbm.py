@@ -18,6 +18,8 @@ import pandas as pd
 import pyspark.sql.functions as sf
 from pyspark.sql import SparkSession
 
+from sparklightautoml.computations.utils import get_executors
+
 try:
     # lightautoml version < 0.3.7.3
     from lightautoml.ml_algo.tuning.base import Distribution
@@ -267,12 +269,7 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
             params["numThreads"] = runtime_settings["num_threads"]
 
         if self._executing_mode == "streaming":
-            num_executors = int(
-                SparkSession
-                .getActiveSession()
-                .conf
-                .get("spark.executor.instances", "1")
-            )
+            num_executors = len(get_executors())
             params["numTasks"] = num_executors
             logger.warning(f'SynapseML Lightgbm is in the streaming mode. '
                            f'Due to bug in SynapseML, setting numTasks to the number of executors: {params["numTasks"]}'
