@@ -16,7 +16,7 @@ from typing import cast
 import lightgbm as lgb
 import pandas as pd
 import pyspark.sql.functions as sf
-
+from pyspark.sql import SparkSession
 
 try:
     # lightautoml version < 0.3.7.3
@@ -183,6 +183,7 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
         experimental_parallel_mode: bool = False,
         persist_output_dataset: bool = True,
         computations_settings: Optional[ComputationalParameters] = None,
+        synapseml_lgbm_params: Optional[Dict[str, Any]] = None,
         dump_before_fitting_dataset_path: Optional[str] = None
     ):
         optimization_search_space = optimization_search_space if optimization_search_space else dict()
@@ -208,13 +209,15 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
         self._convert_to_onnx = convert_to_onnx
         self._mini_batch_size = mini_batch_size
         self._parallelism = parallelism
-        self._executin_mode = execution_mode
+        self._executing_mode = execution_mode
         self._use_barrier_execution_mode = use_barrier_execution_mode
         self._experimental_parallel_mode = experimental_parallel_mode
+        self._lgbm_params = synapseml_lgbm_params or dict()
         self._dump_before_fitting_dataset_path = dump_before_fitting_dataset_path
 
-        assert not (self._executin_mode == "streaming" and self._experimental_parallel_mode), \
-            "Cannot combine streaming mode with compute-parallel execution due to bug in SynapseML LightGBM"
+        assert not (self._executing_mode == "streaming" and self._experimental_parallel_mode), \
+            ("Cannot combine streaming mode with compute-parallel execution due to bug in SynapseML LightGBM "
+             "(see: https://github.com/microsoft/SynapseML/issues/2333)")
 
     def _infer_params(self, runtime_settings: Optional[Dict[str, Any]] = None) -> Tuple[dict, int]:
         """Infer all parameters in lightgbm format.
@@ -262,6 +265,19 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
             params["numTasks"] = runtime_settings["num_tasks"]
         if "num_threads" in runtime_settings:
             params["numThreads"] = runtime_settings["num_threads"]
+
+        if self._executing_mode == "streaming":
+            num_executors = int(
+                SparkSession
+                .getActiveSession()
+                .conf
+                .get("spark.executor.instances", "1")
+            )
+            params["numTasks"] = num_executors
+            logger.warning(f'SynapseML Lightgbm is in the streaming mode. '
+                           f'Due to bug in SynapseML, setting numTasks to the number of executors: {params["numTasks"]}'
+                           f' to avoid SEGSIGV / SEGBUS problems '
+                           f'(see: https://github.com/microsoft/SynapseML/issues/2333)')
 
         return params, verbose_eval
 
@@ -492,7 +508,7 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
             "validationIndicatorCol": validation_column,
             "verbosity": verbose_eval,
             # "executionMode": self._executin_mode,
-            "dataTransferMode": self._executin_mode,
+            "dataTransferMode": self._executing_mode,
             "useSingleDatasetMode": self._use_single_dataset_mode,
             "useBarrierExecutionMode": self._use_barrier_execution_mode,
             "isProvideTrainingMetric": True,
@@ -500,7 +516,7 @@ class SparkBoostLGBM(SparkTabularMLAlgo, ImportanceEstimator):
             "defaultListenPort": random_port,
             **params,
             **({"alpha": 0.5, "lambdaL1": 0.0, "lambdaL2": 0.0} if train.task.name == "reg" else dict()),
-            # "numThreads": 2
+            **self._lgbm_params
         }
 
         # build the booster
