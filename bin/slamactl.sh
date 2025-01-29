@@ -200,6 +200,7 @@ function submit_job_k8s() {
     --conf "spark.sql.autoBroadcastJoinThreshold=100MB" \
     --conf "spark.sql.execution.arrow.pyspark.enabled=true" \
     --conf "spark.sql.warehouse.dir=hdfs://node21.bdcl:9000/tmp/custom-spark-warehouse" \
+
     --conf "spark.kubernetes.container.image=${IMAGE}" \
     --conf "spark.kubernetes.namespace=${KUBE_NAMESPACE}" \
     --conf "spark.kubernetes.authenticate.driver.serviceAccountName=spark" \
@@ -210,40 +211,11 @@ function submit_job_k8s() {
     --conf "spark.kubernetes.container.image.pullPolicy=Always" \
     --conf "spark.kubernetes.driverEnv.SCRIPT_ENV=cluster" \
     --conf "spark.kubernetes.file.upload.path=hdfs://node21.bdcl:9000/tmp/spark_upload_dir" \
+
     --jars "${jars}" \
     --files "examples/spark/log4j2.properties" \
     --py-files "examples/spark/examples_utils.py" \
     ${script_path} "${@}"
-}
-
-
-function port_forward() {
-  script_path=$1
-  filename=$(echo ${script_path} | python -c 'import os; path = input(); print(os.path.splitext(os.path.basename(path))[0]);')
-  spark_app_selector=$(kubectl -n spark-lama-exps get pod -l appname=${filename} -l spark-role=driver -o jsonpath='{.items[0].metadata.labels.spark-app-selector}')
-
-  svc_name=$(kubectl -n ${KUBE_NAMESPACE} get svc -l spark-app-selector=${spark_app_selector} -o jsonpath='{.items[0].metadata.name}')
-  kubectl -n spark-lama-exps port-forward svc/${svc_name} 9040:4040
-}
-
-function port_forward_by_expname() {
-  expname=$1
-  port=$2
-  spark_app_selector=$(kubectl -n spark-lama-exps get pod -l spark-role=driver,expname=${expname} -o jsonpath='{.items[0].metadata.labels.spark-app-selector}')
-  svc_name=$(kubectl -n ${KUBE_NAMESPACE} get svc -l spark-app-selector=${spark_app_selector} -o jsonpath='{.items[0].metadata.name}')
-  kubectl -n spark-lama-exps port-forward svc/${svc_name} ${port}:4040
-}
-
-function logs_by_expname() {
-  expname=$1
-
-  kubectl -n spark-lama-exps logs -l spark-role=driver,expname=${expname}
-}
-
-function logs_ex_by_expname() {
-  expname=$1
-
-  kubectl -n spark-lama-exps logs -l spark-role=executor,expname=${expname}
 }
 
 function submit_job_yarn() {
@@ -324,6 +296,7 @@ function help() {
     build-jars - Builds scala-based components of Slama and creates appropriate jar files in jar folder of the project
     build-pyspark-images - Builds and pushes base pyspark images required to start pyspark on cluster.
       Pushing requires remote docker repo address accessible from the cluster.
+    build-lama-dist - Builds SLAMA .wheel
     build-lama-image - Builds and pushes a docker image to be used for running lama remotely on the cluster.
     build-dist - build_jars, build_pyspark_images, build_lama_image in a sequence
     submit-job - Submit a pyspark application with script that represent SLAMA automl app.
@@ -389,22 +362,6 @@ function main () {
 
     "submit-job-k8s")
         submit_job_k8s "${@}"
-        ;;
-
-    "port-forward")
-        port_forward "${@}"
-        ;;
-
-    "port-forward-by-expname")
-        port_forward_by_expname "${@}"
-        ;;
-
-    "logs-by-expname")
-        logs_by_expname "${@}"
-        ;;
-
-    "logs-ex-by-expname")
-        logs_ex_by_expname "${@}"
         ;;
 
     "help")
