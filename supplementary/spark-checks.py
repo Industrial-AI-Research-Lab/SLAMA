@@ -323,7 +323,7 @@ def check_simple_features_only(*args):
     spark.stop()
 
 
-def check_adv_features_only():
+def check_adv_features_only(*args):
     spark = get_spark_session()
 
     cv = 5
@@ -430,13 +430,13 @@ def main():
 
     match check_name:
         case "lightgbm":
-            check_lightgbm(*sys.argvs[2:])
+            check_lightgbm(*sys.argv[2:])
         case "simple-features-only":
-            check_simple_features_only(*sys.argvs[2:])
+            check_simple_features_only(*sys.argv[2:])
         case "adv-features-only":
-            check_adv_features_only(*sys.argvs[2:])
+            check_adv_features_only(*sys.argv[2:])
         case "lgb-on-prep-dataset":
-            check_lgb_on_prep_dataset(*sys.argvs[2:])
+            check_lgb_on_prep_dataset(*sys.argv[2:])
         case _:
             raise ValueError(f"No check with name {check_name}")
 
