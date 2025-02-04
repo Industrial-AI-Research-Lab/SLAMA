@@ -6,7 +6,7 @@ import uuid
 import pandas as pd
 import pyspark.sql.functions as sf
 
-from examples_utils import BUCKET_NUMS
+from examples_utils import BUCKET_NUMS, BASE_HDFS_PREFIX
 from examples_utils import check_columns
 from examples_utils import get_dataset
 from examples_utils import get_persistence_manager
@@ -114,7 +114,7 @@ def main(spark: SparkSession, dataset_name: str, seed: int):
 
         logger.info(f"score for test predictions: {test_metric_value}")
 
-    base_path = "/tmp/spark_results"
+    base_path = f"{BASE_HDFS_PREFIX}/tmp/spark_results"
     automl_model_path = os.path.join(base_path, "automl_pipeline")
     os.makedirs(base_path, exist_ok=True)
 

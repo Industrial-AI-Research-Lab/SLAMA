@@ -97,7 +97,7 @@ used_cars_preproc_params = {
 DATASETS = {
     # HDFS-located datasets
     "hdfs_lama_test_dataset": Dataset(
-        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/CSV/lama_test_dataset.csv", task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
+        path=f"{BASE_HDFS_PREFIX}/opt/spark_data/sampled_app_train.csv", task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
     ),
     "hdfs_used_cars_dataset": Dataset(
         path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/CSV/used_cars_dataset.csv",  **used_cars_params
