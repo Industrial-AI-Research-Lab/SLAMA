@@ -20,7 +20,7 @@ from sparklightautoml.utils import get_current_session
 BUCKET_NUMS = 6
 PERSISTENCE_MANAGER_ENV_VAR = "PERSISTENCE_MANAGER"
 
-BASE_HDFS_PREFIX = ""
+BASE_HDFS_PREFIX = os.environ.get("BASE_HDFS_PREFIX", "")
 BASE_DATASETS_PATH = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), 'data')
 
 
