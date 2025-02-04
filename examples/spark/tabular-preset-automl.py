@@ -1,5 +1,6 @@
 import logging.config
 import os
+import sys
 import uuid
 
 import pandas as pd
@@ -175,12 +176,14 @@ def multirun(spark: SparkSession, dataset_name: str):
 
 
 if __name__ == "__main__":
+    assert len(sys.argv) <= 2, "There may be no more than one argument"
+    dataset_name = sys.argv[1] if len(sys.argv) > 1 else "lama_test_dataset"
     # if one uses bucketing based persistence manager,
     # the argument below number should be equal to what is set to 'bucket_nums' of the manager
     spark_sess = get_spark_session(BUCKET_NUMS)
     # One can run:
     # 1. main(dataset_name="lama_test_dataste", seed=42)
     # 2. multirun(spark_sess, dataset_name="lama_test_dataset")
-    main(spark_sess, dataset_name="lama_test_dataset", seed=42)
+    main(spark_sess, dataset_name=dataset_name, seed=42)
 
     spark_sess.stop()
