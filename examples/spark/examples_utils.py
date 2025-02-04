@@ -103,10 +103,10 @@ DATASETS = {
         path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/CSV/used_cars_dataset.csv",  **used_cars_params
     ),
     "hdfs_used_cars_dataset_10x": Dataset(
-        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/used_cars_dataset_10x.slama/data.parquet", **used_cars_params
+        path=f"{BASE_HDFS_PREFIX}/opt/spark_data/used_cars_10x_dataset.csv", **used_cars_params
     ),
     "hdfs_used_cars_dataset_100x": Dataset(
-        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/used_cars_dataset_100x.slama/data.parquet", **used_cars_params
+        path=f"{BASE_HDFS_PREFIX}/opt/spark_data/used_cars_100x_dataset.csv", **used_cars_params
     ),
     "hdfs_small_used_cars_dataset_preproc": Dataset(
         path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/small_used_cars_dataset.slama/data.parquet",

@@ -97,6 +97,8 @@ def main(spark: SparkSession, dataset_name: str, seed: int):
 
         logger.info(f"score for test predictions: {test_metric_value}")
 
+    return
+
     with log_exec_timer("spark-lama predicting on test (#2 way)"):
         te_pred = automl.transformer().transform(test_data_dropped)
 
