@@ -209,6 +209,7 @@ function submit_job_k8s() {
     --conf "spark.kubernetes.executor.deleteOnTermination=false" \
     --conf "spark.kubernetes.container.image.pullPolicy=Always" \
     --conf "spark.kubernetes.driverEnv.SCRIPT_ENV=cluster" \
+    --conf "spark.kubernetes.driverEnv.BASE_HDFS_PREFIX=${BASE_HDFS_PREFIX:-''}" \
     --conf "spark.kubernetes.file.upload.path=${SPARK_K8S_FILE_UPLOAD_PATH:-/tmp/spark-upload-dir}" \
     --jars "${jars}" \
     --files "examples/spark/log4j2.properties" \
