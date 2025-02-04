@@ -110,6 +110,7 @@ def get_lightgbm_params(spark: SparkSession, dataset_name: str) -> Tuple[str, Di
             }
         case "used_cars_dataset_100x":
             data_path = "hdfs://node21.bdcl:9000/opt/preprocessed_datasets/used_cars_dataset_100x.slama/data.parquet"
+            # data_path = "hdfs://node21.bdcl:9000/opt/spark_data/used_cars_100x_dataset.csv"
             dataset_specific_params = {
                 'labelCol': "price",
                 'objective': 'regression',
