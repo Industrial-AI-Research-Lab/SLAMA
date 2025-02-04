@@ -308,6 +308,37 @@ class BucketedPersistenceManager(BasePersistenceManager):
         return f"{pdf.name}_{pdf.uid}".replace("-", "__")
 
 
+class NoOpPersistenceManager(BasePersistenceManager):
+    """
+    Manager that uses Spark .cache() / .persist() methods
+    """
+
+    def __init__(self, parent: Optional["PersistenceManager"] = None, prune_history: bool = False):
+        super().__init__(parent)
+        self._prune_history = prune_history
+
+    def _persist(self, pdf: PersistableDataFrame, level: PersistenceLevel) -> PersistableDataFrame:
+        logger.debug(
+            f"Manager {self._uid}: " f"caching and materializing the dataset (uid={pdf.uid}, name={pdf.name})."
+        )
+
+        df = (
+            pdf.sdf.sql_ctx.sparkSession.createDataFrame(pdf.sdf.rdd, schema=pdf.sdf.schema)
+            if self._prune_history
+            else pdf.sdf
+        )
+
+        logger.debug(f"Manager {self._uid}: " f"caching succeeded for the dataset (uid={pdf.uid}, name={pdf.name}).")
+
+        return PersistableDataFrame(ds, pdf.uid, pdf.callback, pdf.base_dataset)
+
+    def _unpersist(self, pdf: PersistableDataFrame):
+        pass
+
+    def _create_child(self) -> PersistenceManager:
+        return NoOpPersistenceManager(self)
+
+
 class CompositePersistenceManager(BasePersistenceManager):
     """
     Universal composite manager that can combine other manager to apply different

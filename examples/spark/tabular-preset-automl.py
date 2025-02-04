@@ -15,7 +15,7 @@ from examples_utils import prepare_test_and_train
 from pyspark.ml import PipelineModel
 from pyspark.sql import SparkSession
 
-from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
+from sparklightautoml.dataset.persistence import PlainCachePersistenceManager, NoOpPersistenceManager
 from sparklightautoml.automl.presets.tabular_presets import SparkTabularAutoML
 from sparklightautoml.dataset.base import SparkDataset
 from sparklightautoml.tasks.base import SparkTask
@@ -44,7 +44,8 @@ def main(spark: SparkSession, dataset_name: str, seed: int):
     dataset = get_dataset(dataset_name)
 
     # persistence_manager = get_persistence_manager()
-    persistence_manager = PlainCachePersistenceManager()
+    # persistence_manager = PlainCachePersistenceManager()
+    persistence_manager = NoOpPersistenceManager()
     # Alternative ways to define persistence_manager
     # persistence_manager = get_persistence_manager("CompositePlainCachePersistenceManager")
     # persistence_manager = CompositePlainCachePersistenceManager(bucket_nums=BUCKET_NUMS)

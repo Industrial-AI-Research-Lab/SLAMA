@@ -171,10 +171,10 @@ def prepare_test_and_train(
     data.write.mode("overwrite").format("noop").save()
 
     train_data, test_data = data.randomSplit([1 - test_size, test_size], seed)
-    train_data = train_data.cache()
-    test_data = test_data.cache()
-    train_data.write.mode("overwrite").format("noop").save()
-    test_data.write.mode("overwrite").format("noop").save()
+    # train_data = train_data.cache()
+    # test_data = test_data.cache()
+    # train_data.write.mode("overwrite").format("noop").save()
+    # test_data.write.mode("overwrite").format("noop").save()
 
     data.unpersist()
 
