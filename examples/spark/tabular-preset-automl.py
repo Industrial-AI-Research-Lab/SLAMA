@@ -37,8 +37,8 @@ def main(spark: SparkSession, dataset_name: str, seed: int):
     # 2. use_algos = [["lgb_tuned"]]
     # 3. use_algos = [["linear_l2"]]
     # 4. use_algos = [["lgb", "linear_l2"], ["lgb"]]
-    use_algos = [["lgb", "linear_l2"], ["lgb"]]
-    cv = 3
+    use_algos = [["lgb"]]
+    cv = 5
     dataset = get_dataset(dataset_name)
 
     persistence_manager = get_persistence_manager()
@@ -66,7 +66,7 @@ def main(spark: SparkSession, dataset_name: str, seed: int):
             },
             linear_l2_params={"default_params": {"regParam": [1e-5]}},
             reader_params={"cv": cv, "advanced_roles": False},
-            computation_settings=("parallelism", 3),
+            # computation_settings=("parallelism", 3),
         )
 
         oof_predictions = automl.fit_predict(train_data, roles=dataset.roles, persistence_manager=persistence_manager)

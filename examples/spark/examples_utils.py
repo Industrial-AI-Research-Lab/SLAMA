@@ -20,7 +20,7 @@ from sparklightautoml.utils import get_current_session
 BUCKET_NUMS = 6
 PERSISTENCE_MANAGER_ENV_VAR = "PERSISTENCE_MANAGER"
 
-BASE_PREFIX = ""
+BASE_HDFS_PREFIX = ""
 BASE_DATASETS_PATH = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), 'data')
 
 
@@ -95,10 +95,28 @@ used_cars_preproc_params = {
 }
 
 DATASETS = {
-    "small_used_cars_dataset_preproc": Dataset(
-        path=f"{BASE_PREFIX}/opt/preprocessed_datasets/small_used_cars_dataset.slama/data.parquet",
+    # HDFS-located datasets
+    "hdfs_lama_test_dataset": Dataset(
+        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/CSV/sampled_app_train.csv", task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
+    ),
+    "hdfs_used_cars_dataset": Dataset(
+        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/CSV/used_cars_dataset.csv",  **used_cars_params
+    ),
+    "hdfs_used_cars_dataset_10x": Dataset(
+        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/used_cars_dataset_10x.slama/data.parquet", **used_cars_params
+    ),
+    "hdfs_used_cars_dataset_100x": Dataset(
+        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/used_cars_dataset_100x.slama/data.parquet", **used_cars_params
+    ),
+    "hdfs_small_used_cars_dataset_preproc": Dataset(
+        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/small_used_cars_dataset.slama/data.parquet",
         **used_cars_preproc_params
     ),
+    "hdfs_used_cars_dataset_100x_preproc": Dataset(
+        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/used_cars_dataset_100x.slama/data.parquet",
+        **used_cars_preproc_params
+    ),
+    # local datasets
     "small_used_cars_dataset": Dataset(path=ds_path("small_used_cars_data.csv"), **used_cars_params),
     "used_cars_dataset": Dataset(path=ds_path("used_cars_data.csv"), **used_cars_params),
     # "used_cars_dataset_1x": Dataset(path=ds_path("derivative_datasets/1x_dataset.csv"), **used_cars_params),
@@ -106,10 +124,6 @@ DATASETS = {
     "used_cars_dataset_10x": Dataset(path=ds_path("used_cars_data_10x_2.csv"), **used_cars_params),
     "used_cars_dataset_40x": Dataset(path=ds_path("used_cars_40x_dataset.csv"), **used_cars_params),
     "used_cars_dataset_100x": Dataset(path=ds_path("used_cars_100x_dataset.csv"), **used_cars_params),
-    "used_cars_dataset_100x_preproc": Dataset(
-        path=f"{BASE_PREFIX}/opt/preprocessed_datasets/used_cars_dataset_100x.slama/data.parquet",
-        **used_cars_preproc_params
-    ),
     "lama_test_dataset": Dataset(
         path=ds_path("sampled_app_train.csv"), task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
         # path=ds_path("100k_sampled_app_train.csv"), task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
