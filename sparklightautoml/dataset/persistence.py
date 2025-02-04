@@ -330,7 +330,7 @@ class NoOpPersistenceManager(BasePersistenceManager):
 
         logger.debug(f"Manager {self._uid}: " f"caching succeeded for the dataset (uid={pdf.uid}, name={pdf.name}).")
 
-        return PersistableDataFrame(ds, pdf.uid, pdf.callback, pdf.base_dataset)
+        return PersistableDataFrame(df, pdf.uid, pdf.callback, pdf.base_dataset)
 
     def _unpersist(self, pdf: PersistableDataFrame):
         pass
