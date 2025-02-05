@@ -1,7 +1,7 @@
 import logging.config
 
 from pyspark.sql import SparkSession
-
+from pyspark.sql import functions as sf
 from examples_utils import BUCKET_NUMS, BASE_HDFS_PREFIX
 from examples_utils import get_spark_session
 from sparklightautoml.automl.presets.tabular_presets import SparkTabularAutoML
@@ -26,14 +26,16 @@ def main(spark: SparkSession, seed: int):
     with log_exec_timer("spark-lama training") as train_timer:
         task = SparkTask(task_type)
 
+        target = 'price'
         train_data = spark.read.parquet(
             f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/adv_small_used_cars_dataset.slama/data.parquet"
         )
-        numeric_cols = [c for c in train_data.columns if c not in ['_id', 'reader_fold_num']]
-        train_data = train_data.select(*numeric_cols)
+        numeric_cols = [c for c in train_data.columns if c not in ['_id', 'reader_fold_num', target]]
+        numeric_cols = {c: c.replace('[', '(').replace(']', ')') for c in numeric_cols}
+        train_data = train_data.select(target, *(sf.col(c).alias(c_val) for c, c_val in numeric_cols.items()))
         roles = {
-            "target": "price",
-            "numeric": numeric_cols
+            "target": target,
+            "numeric": numeric_cols.values()
         }
 
         # optionally: set 'convert_to_onnx': True to use onnx-based version of lgb's model transformer
@@ -41,6 +43,7 @@ def main(spark: SparkSession, seed: int):
             spark=spark,
             task=task,
             general_params={"use_algos": use_algos},
+            selection_params={"select_algos": []},
             # execution mode only available for synapseml 0.11.1
             lgb_params={
                 "default_params": {

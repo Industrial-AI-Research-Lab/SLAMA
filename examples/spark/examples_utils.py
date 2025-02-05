@@ -99,11 +99,6 @@ DATASETS = {
     "hdfs_lama_test_dataset": Dataset(
         path=f"{BASE_HDFS_PREFIX}/opt/spark_data/sampled_app_train.csv", task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
     ),
-    "hdfs_adv_small_used_cars": Dataset(
-        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/adv_small_used_cars_dataset.slama/data.parquet",
-        task_type="reg",
-
-    ),
     "hdfs_used_cars_dataset": Dataset(
         path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/CSV/used_cars_dataset.csv",  **used_cars_params
     ),
