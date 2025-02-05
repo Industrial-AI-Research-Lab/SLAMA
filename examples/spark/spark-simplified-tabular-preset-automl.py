@@ -37,7 +37,7 @@ def main(spark: SparkSession, seed: int):
         train_data = train_data.select(target, *(sf.col(c).alias(c_val) for c, c_val in numeric_cols.items()))
         roles = {
             "target": target,
-            "numeric": numeric_cols.values()
+            "numeric": list(numeric_cols.values())
         }
 
         # optionally: set 'convert_to_onnx': True to use onnx-based version of lgb's model transformer
