@@ -5,24 +5,21 @@ import uuid
 
 import pandas as pd
 import pyspark.sql.functions as sf
+from pyspark.ml import PipelineModel
+from pyspark.sql import SparkSession
 
 from examples_utils import BUCKET_NUMS, BASE_HDFS_PREFIX
 from examples_utils import check_columns
 from examples_utils import get_dataset
-from examples_utils import get_persistence_manager
 from examples_utils import get_spark_session
 from examples_utils import prepare_test_and_train
-from pyspark.ml import PipelineModel
-from pyspark.sql import SparkSession
-
-from sparklightautoml.dataset.persistence import PlainCachePersistenceManager, NoOpPersistenceManager
 from sparklightautoml.automl.presets.tabular_presets import SparkTabularAutoML
 from sparklightautoml.dataset.base import SparkDataset
+from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
 from sparklightautoml.tasks.base import SparkTask
 from sparklightautoml.utils import VERBOSE_LOGGING_FORMAT
 from sparklightautoml.utils import log_exec_timer
 from sparklightautoml.utils import logging_config
-
 
 logging.config.dictConfig(logging_config(level=logging.DEBUG, log_filename="/tmp/slama.log"))
 logging.basicConfig(level=logging.DEBUG, format=VERBOSE_LOGGING_FORMAT)
@@ -32,7 +29,7 @@ logger = logging.getLogger(__name__)
 # Run ./bin/download-datasets.sh to get required datasets into the folder.
 
 
-def main(spark: SparkSession, dataset_name: str, seed: int):
+def main(spark: SparkSession, dataset_name: str, seed: int, check_all_predictions_ways: bool = True):
     # Algos and layers to be used during automl:
     # For example:
     # 1. use_algos = [["lgb"]]
@@ -43,10 +40,9 @@ def main(spark: SparkSession, dataset_name: str, seed: int):
     cv = 5
     dataset = get_dataset(dataset_name)
 
-    # persistence_manager = get_persistence_manager()
     persistence_manager = PlainCachePersistenceManager()
-    # persistence_manager = NoOpPersistenceManager(prune_history=True)
     # Alternative ways to define persistence_manager
+    # persistence_manager = get_persistence_manager()
     # persistence_manager = get_persistence_manager("CompositePlainCachePersistenceManager")
     # persistence_manager = CompositePlainCachePersistenceManager(bucket_nums=BUCKET_NUMS)
 
@@ -104,7 +100,19 @@ def main(spark: SparkSession, dataset_name: str, seed: int):
 
         logger.info(f"score for test predictions: {test_metric_value}")
 
-    return
+    if not check_all_predictions_ways:
+        result = {
+            "seed": seed,
+            "dataset": dataset_name,
+            "used_algo": str(use_algos),
+            "metric_value": metric_value,
+            "test_metric_value": test_metric_value,
+            "train_duration_secs": train_timer.duration,
+            "predict_duration_secs": predict_timer.duration,
+        }
+
+        print(f"EXP-RESULT: {result}")
+        return result
 
     with log_exec_timer("spark-lama predicting on test (#2 way)"):
         te_pred = automl.transformer().transform(test_data_dropped)
@@ -193,6 +201,6 @@ if __name__ == "__main__":
     # One can run:
     # 1. main(dataset_name="lama_test_dataste", seed=42)
     # 2. multirun(spark_sess, dataset_name="lama_test_dataset")
-    main(spark_sess, dataset_name=dataset_name, seed=42)
+    main(spark_sess, dataset_name=dataset_name, seed=42, check_all_predictions_ways=False)
 
     spark_sess.stop()
