@@ -9,6 +9,7 @@ import psutil
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql import SparkSession, DataFrame
 from synapse.ml.lightgbm import LightGBMClassifier, LightGBMRegressor
+from pyspark.sql import functions as sf
 
 from sparklightautoml.dataset.base import SparkDataset
 from sparklightautoml.dataset.persistence import PlainCachePersistenceManager
@@ -428,25 +429,39 @@ def check_lgb_on_prep_dataset(*args):
 
 
 def check_dataset(*args):
-    dataset_name = args[0]
+    dataset_name = "adv_small_used_cars_dataset"
 
     print(f"Working with dataset: {dataset_name}")
 
     spark = get_spark_session()
 
+    execs = int(spark.conf.get("spark.executor.instances", "1"))
+    cores = int(spark.conf.get("spark.executor.cores", "8"))
+    partitions_coefficient = 1
+
     data_path, run_params = get_lightgbm_params(spark, dataset_name)
 
     df = spark.read.parquet(data_path)
 
-    # 'engine_displacement', 'highway_fuel_economy', 'mileage', 'listing_id', 'daysonmarket', 'owner_count'
+    # print(f"NUM ROWS: {df.count()}")
+    # 10_000 * 30_000 == 300_000_000
+    scale_coeff = 10
+    target = 'price'
+    num_cols = [c for c in df.columns if c not in ['_id', 'reader_fold_num', target]]
 
-    numeric_cols = [c for c in df.columns if c not in ['_id', 'reader_fold_num']]
-    df = df.select(*numeric_cols)
+    df = (
+        df
+        .withColumn('__tmp__', sf.explode(sf.lit(list(range(scale_coeff)))))
+        .drop('__tmp__')
+        .select(target, *((sf.col(c) + (sf.rand(42) / sf.lit(10.0))).alias(c) for c in num_cols))
+        .repartition(execs * cores * partitions_coefficient)
+    )
 
-    sreader = SparkToSparkReader(task=SparkTask("reg"), cv=5, random_state=1, advanced_roles=False)
-    sdataset = sreader.fit_read(df, roles={"numeric": numeric_cols}, target="price")
-
-    k = 0
+    df.write.parquet(
+        "hdfs://node21.bdcl:9000/opt/preprocessed_datasets/adv_used_cars_100x.parquet",
+        mode="overwrite",
+        compression="none"
+    )
 
 
 def main():
