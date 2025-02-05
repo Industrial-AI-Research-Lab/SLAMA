@@ -441,11 +441,11 @@ def check_dataset(*args):
 
     data_path, run_params = get_lightgbm_params(spark, dataset_name)
 
-    df = spark.read.parquet(data_path)
+    df = spark.read.parquet(data_path).repartition(execs * cores * partitions_coefficient).cache()
 
-    # print(f"NUM ROWS: {df.count()}")
+    print(f"NUM ROWS: {df.count()}")
     # 10_000 * 30_000 == 300_000_000
-    scale_coeff = 10
+    scale_coeff = 3_000
     target = 'price'
     num_cols = [c for c in df.columns if c not in ['_id', 'reader_fold_num', target]]
 
@@ -454,11 +454,10 @@ def check_dataset(*args):
         .withColumn('__tmp__', sf.explode(sf.lit(list(range(scale_coeff)))))
         .drop('__tmp__')
         .select(target, *((sf.col(c) + (sf.rand(42) / sf.lit(10.0))).alias(c) for c in num_cols))
-        .repartition(execs * cores * partitions_coefficient)
     )
 
     df.write.parquet(
-        "hdfs://node21.bdcl:9000/opt/preprocessed_datasets/adv_used_cars_100x.parquet",
+        "hdfs://node21.bdcl:9000/opt/preprocessed_datasets/adv_used_cars_10x.parquet",
         mode="overwrite",
         compression="none"
     )
