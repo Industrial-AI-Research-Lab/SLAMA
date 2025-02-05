@@ -28,7 +28,9 @@ def main(spark: SparkSession, seed: int):
 
         target = 'price'
         train_data = spark.read.parquet(
-            f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/adv_small_used_cars_dataset.slama/data.parquet"
+            # f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/adv_small_used_cars_dataset.slama/data.parquet"
+            # f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/adv_used_cars_10x.parquet"
+            f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/adv_used_cars_100x.parquet"
         )
         numeric_cols = [c for c in train_data.columns if c not in ['_id', 'reader_fold_num', target]]
         numeric_cols = {c: c.replace('[', '(').replace(']', ')') for c in numeric_cols}
