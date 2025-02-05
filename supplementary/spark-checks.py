@@ -118,6 +118,7 @@ def get_lightgbm_params(spark: SparkSession, dataset_name: str) -> Tuple[str, Di
                 'predictionCol': 'prediction'
             }
         case "adv_small_used_cars_dataset":
+            data_path = "hdfs://node21.bdcl:9000/opt/preprocessed_datasets/adv_small_used_cars_dataset.slama/data.parquet"
             dataset_specific_params = {
                 'labelCol': "price",
                 'objective': 'regression',
@@ -426,12 +427,36 @@ def check_lgb_on_prep_dataset(*args):
     spark.stop()
 
 
+def check_dataset(*args):
+    dataset_name = args[0]
+
+    print(f"Working with dataset: {dataset_name}")
+
+    spark = get_spark_session()
+
+    data_path, run_params = get_lightgbm_params(spark, dataset_name)
+
+    df = spark.read.parquet(data_path)
+
+    # 'engine_displacement', 'highway_fuel_economy', 'mileage', 'listing_id', 'daysonmarket', 'owner_count'
+
+    numeric_cols = [c for c in df.columns if c not in ['_id', 'reader_fold_num']]
+    df = df.select(*numeric_cols)
+
+    sreader = SparkToSparkReader(task=SparkTask("reg"), cv=5, random_state=1, advanced_roles=False)
+    sdataset = sreader.fit_read(df, roles={"numeric": numeric_cols}, target="price")
+
+    k = 0
+
+
 def main():
     check_name = sys.argv[1]
 
     match check_name:
         case "lightgbm":
             check_lightgbm(*sys.argv[2:])
+        case "check-dataset":
+            check_dataset(*sys.argv[2:])
         case "simple-features-only":
             check_simple_features_only(*sys.argv[2:])
         case "adv-features-only":

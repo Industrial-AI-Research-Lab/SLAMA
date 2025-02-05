@@ -99,6 +99,11 @@ DATASETS = {
     "hdfs_lama_test_dataset": Dataset(
         path=f"{BASE_HDFS_PREFIX}/opt/spark_data/sampled_app_train.csv", task_type="binary", roles={"target": "TARGET", "drop": ["SK_ID_CURR"]}
     ),
+    "hdfs_adv_small_used_cars": Dataset(
+        path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/adv_small_used_cars_dataset.slama/data.parquet",
+        task_type="reg",
+
+    ),
     "hdfs_used_cars_dataset": Dataset(
         path=f"{BASE_HDFS_PREFIX}/opt/preprocessed_datasets/CSV/used_cars_dataset.csv",  **used_cars_params
     ),
@@ -171,12 +176,12 @@ def prepare_test_and_train(
     data.write.mode("overwrite").format("noop").save()
 
     train_data, test_data = data.randomSplit([1 - test_size, test_size], seed)
-    train_data = train_data.cache()
-    test_data = test_data.cache()
-    train_data.write.mode("overwrite").format("noop").save()
-    test_data.write.mode("overwrite").format("noop").save()
+    # train_data = train_data.cache()
+    # test_data = test_data.cache()
+    # train_data.write.mode("overwrite").format("noop").save()
+    # test_data.write.mode("overwrite").format("noop").save()
 
-    data.unpersist()
+    # data.unpersist()
 
     return train_data, test_data
 

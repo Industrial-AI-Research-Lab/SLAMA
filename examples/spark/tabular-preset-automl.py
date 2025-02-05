@@ -44,8 +44,8 @@ def main(spark: SparkSession, dataset_name: str, seed: int):
     dataset = get_dataset(dataset_name)
 
     # persistence_manager = get_persistence_manager()
-    # persistence_manager = PlainCachePersistenceManager()
-    persistence_manager = NoOpPersistenceManager(prune_history=True)
+    persistence_manager = PlainCachePersistenceManager()
+    # persistence_manager = NoOpPersistenceManager(prune_history=True)
     # Alternative ways to define persistence_manager
     # persistence_manager = get_persistence_manager("CompositePlainCachePersistenceManager")
     # persistence_manager = CompositePlainCachePersistenceManager(bucket_nums=BUCKET_NUMS)
