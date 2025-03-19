@@ -14,17 +14,18 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-    "com.microsoft.azure" % "synapseml_2.12" % "1.0.8" % "provided",
-    "org.apache.spark" %% "spark-core" % "3.5.3" % "provided",
-    "org.apache.spark" %% "spark-sql" % "3.5.3" % "provided",
-    "org.apache.spark" %% "spark-mllib" % "3.5.3" % "provided",
+    "com.microsoft.azure" % "synapseml_2.12" % "1.0.8",
+    "org.scalanlp" %% "breeze" % "1.2",
+    "org.apache.spark" %% "spark-core" % "3.3.1" % "provided",
+    "org.apache.spark" %% "spark-sql" % "3.3.1" % "provided",
+    "org.apache.spark" %% "spark-mllib" % "3.3.1" % "provided",
     "org.scalatest" %% "scalatest" % "3.2.14" % Test
 )
 
 // uncomment the following lines if you need to build a fat jar
-//lazy val app = (project in file("."))
-//assemblyMergeStrategy in assembly := {
-//    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-//    case x => MergeStrategy.first
-//}
-//assembly / assemblyJarName := "spark-lightautoml-assembly-fatjar-0.1.1.jar"
+lazy val app = (project in file("."))
+assemblyMergeStrategy in assembly := {
+    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+    case x => MergeStrategy.first
+}
+assembly / assemblyJarName := "spark-lightautoml-assembly-fatjar-0.1.1.jar"

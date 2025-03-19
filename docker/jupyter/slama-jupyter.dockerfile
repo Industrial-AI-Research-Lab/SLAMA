@@ -72,5 +72,31 @@ ENV HOME="/home/${NB_USER}"
 
 WORKDIR "${HOME}"
 
-
 CMD ["jupyter", "lab", "--notebook-dir=/home/jovyan", "--ip=0.0.0.0", "--port=8888", "--allow-root", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.password=''", "--NotebookApp.allow_origin='*'"]
+
+USER root
+
+RUN pip3 install pyspark==3.3.1
+
+RUN mkdir -p /src
+
+COPY spark-lightautoml-assembly-fatjar-0.1.1.jar /src
+
+COPY sparklightautoml-0.5.2-py3-none-any.whl /src
+
+RUN pip3 install /src/sparklightautoml-0.5.2-py3-none-any.whl
+
+RUN apt-get update --yes && \
+    apt-get install --yes --no-install-recommends \
+    openjdk-8-jdk && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY examples /src
+
+COPY examples/data /opt/spark_data
+
+RUN useradd -ms /bin/bash -u ${NB_UID} -g ${NB_GID} ${NB_USER}
+
+RUN pip3 install pyspark==3.3.3
+
+USER ${NB_UID}
